@@ -1,0 +1,6 @@
+# ninja log v5
+82	1706	7003320518674478	CMakeFiles/Assignment1.dir/matrix.cpp.obj	dd241d425113fe32
+116	1710	7003320518704646	CMakeFiles/Assignment1.dir/LP_solvers.cpp.obj	22833a9af97f5bc6
+35	2719	7003335324239037	CMakeFiles/Assignment1.dir/main.cpp.obj	16b72cbe58da05a4
+473	591	7002546531044604	Assignment1.exe	8ec97de6eb4cd6
+3	395	7002546083878408	CMakeFiles/Assignment1.dir/diff_int.cpp.obj	e91211dd69d208a5
