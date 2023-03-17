@@ -26,13 +26,33 @@ void printv(const std::vector<double>& a);
 std::vector<double> operator*=(std::vector<double> & a, const std::vector<double> & b);
 std::vector<double> operator*(std::vector<double> a, const std::vector<double> & b);
 
+//V-V Division
+std::vector<double> operator/=(std::vector<double> & a, const std::vector<double> & b);
+std::vector<double> operator/(std::vector<double> a, const std::vector<double> & b);
+
 //V-V Addition
 std::vector<double> operator+=(std::vector<double> & a, const std::vector<double> & b);
 std::vector<double> operator+(std::vector<double> a, const std::vector<double> & b);
 
+//V-V Subtraction
+std::vector<double> operator-=(std::vector<double> & a, const std::vector<double> & b);
+std::vector<double> operator-(std::vector<double> a, const std::vector<double> & b);
+
 //V-D Multiplication
-std::vector<double> operator*(double & a, std::vector<double> v);
-std::vector<double> operator*(std::vector<double> v, double & a);
+std::vector<double> operator*=(std::vector<double> & v, const double & a);
+std::vector<double> operator*(std::vector<double> v, const double & a);
+std::vector<double> operator*(const double & a, std::vector<double> v);
+
+//V-D Addition
+std::vector<double> operator+=(std::vector<double> & v, const double & a);
+std::vector<double> operator+(std::vector<double> v, const double & a);
+std::vector<double> operator+(const double & a, std::vector<double> v);
+
+//V-D Subtraction
+std::vector<double> operator-=(std::vector<double> & v, const double & a);
+std::vector<double> operator-(std::vector<double> v, const double & a);
+std::vector<double> operator-(const double & a, std::vector<double> v);
+
 
 //Conversions & Integrations
 //Function to integrate over a vector

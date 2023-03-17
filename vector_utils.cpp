@@ -19,6 +19,7 @@ void printv(const std::vector<double>& a){
     std::cout<<"\n";
 }
 
+//=======================================================
 //Overload vector operations to make direct products easier
 //V-V Multiplication
 std::vector<double> operator*=(std::vector<double> & a, const std::vector<double> & b){
@@ -30,6 +31,16 @@ std::vector<double> operator*=(std::vector<double> & a, const std::vector<double
 }
 std::vector<double> operator*(std::vector<double> a, const std::vector<double> & b){return a*=b;}
 
+//V-V Division
+std::vector<double> operator/=(std::vector<double> & a, const std::vector<double> & b){
+    assert(a.size()==b.size() && "Tried to divide two vectors with different lengths");
+    for (int i=0; i<a.size(); i++){
+        a[i]/=b[i];
+    }
+    return(a);
+}
+std::vector<double> operator/(std::vector<double> a, const std::vector<double> & b){return a/=b;}
+
 //V-V Addition
 std::vector<double> operator+=(std::vector<double> & a, const std::vector<double> & b){
     assert(a.size()==b.size() && "Tried to add two vectors with different lengths");
@@ -40,15 +51,42 @@ std::vector<double> operator+=(std::vector<double> & a, const std::vector<double
 }
 std::vector<double> operator+(std::vector<double> a, const std::vector<double> & b){return a+=b;}
 
+//V-V Subtraction
+std::vector<double> operator-=(std::vector<double> & a, const std::vector<double> & b){
+    assert(a.size()==b.size() && "Tried to subtract two vectors with different lengths");
+    for (int i=0; i<a.size(); i++){
+        a[i]-=b[i];
+    }
+    return(a);
+}
+std::vector<double> operator-(std::vector<double> a, const std::vector<double> & b){return a-=b;}
+
 //V-D Multiplication
-std::vector<double> operator*(double & a, std::vector<double> v){
+std::vector<double> operator*=(std::vector<double> & v, const double & a){
     for (int i=0; i<v.size(); i++){
         v[i]*=a;
     }
     return(v);
 }
-std::vector<double> operator*(std::vector<double> v, double & a){return(a*v);}
+std::vector<double> operator*(std::vector<double> v, const double & a){return(v*=a);}
+std::vector<double> operator*(const double & a, std::vector<double> v){return(v*a);}
 
+//V-D Addition
+std::vector<double> operator+=(std::vector<double> & v, const double & a){
+    for (int i=0; i<v.size(); i++){
+        v[i]+=a;
+    }
+    return(v);
+}
+std::vector<double> operator+(std::vector<double> v, const double & a){return(v+=a);}
+std::vector<double> operator+(const double & a, std::vector<double> v){return(v+a);}
+
+//V-D Subtraction
+std::vector<double> operator-=(std::vector<double> & v, const double & a){return(v+=a*-1);}
+std::vector<double> operator-(std::vector<double> v, const double & a){return(v-=a);}
+std::vector<double> operator-(const double & a, std::vector<double> v){return(v-a);}
+
+//=======================================================
 //Conversions & Integrations
 //Function to integrate over a vector
 double vint(const std::vector<double>& a){

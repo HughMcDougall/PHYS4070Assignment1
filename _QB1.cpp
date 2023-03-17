@@ -80,13 +80,13 @@ int main(int argc, char *argv[]) {
         if (argc > 7){
             save_outputs = std::stoi(argv[7]);
         } else{
-            save_outputs  = true;
+            save_outputs  = false;
         }
 
         if (argc > 8){
             output_dir = argv[8];
         } else{
-            output_dir  = "./outputs_B1/";
+            output_dir  = "./outputs/B1/";
         }
     }
 

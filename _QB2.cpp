@@ -42,58 +42,41 @@ int main(int argc, char *argv[]) {
     // Read inputs. Scoped to allow to collapse easily in editor
     {
         if (argc > 1){
-            Z = std::stoi(argv[1]);
-        } else{
-            Z = 1;
-        }
-
-        if (argc > 2){
-            l = std::stoi(argv[2]);
-        } else{
-            l = 0;
-        }
-
-        if (argc > 3){
-            nsplines = std::stoi(argv[3]);
+            nsplines = std::stoi(argv[1]);
         } else{
             nsplines = 60;
         }
 
-        if (argc > 4){
-            ngrid = std::stoi(argv[4]);
+        if (argc > 2){
+            ngrid = std::stoi(argv[2]);
         } else{
-            ngrid = 1001;
+            ngrid = 20001;
+        }
+
+        if (argc > 3){
+            rmin = std::stof(argv[3]);
+        } else{
+            rmin = 0.0001;
+        }
+
+        if (argc > 4){
+            rmax = std::stof(argv[4]);
+        } else{
+            rmax  = 80;
         }
 
         if (argc > 5){
-            rmin = std::stof(argv[5]);
-        } else{
-            rmin = 0.001;
-        }
-
-        if (argc > 6){
-            rmax = std::stof(argv[6]);
-        } else{
-            rmax  = 20;
-        }
-
-        if (argc > 7){
-            save_outputs = std::stoi(argv[7]);
+            save_outputs = std::stoi(argv[5]);
         } else{
             save_outputs  = false;
         }
 
-        if (argc > 8){
-            output_dir = argv[8];
+        if (argc > 6){
+            output_dir = argv[6];
         } else{
-            output_dir  = "./outputs_B2/";
+            output_dir  = "./outputs/B2/";
         }
 
-        if (argc > 9){
-            use_greens  = std::stoi(argv[9]);
-        } else{
-            use_greens  = false;
-        }
 
     }
 
@@ -108,7 +91,11 @@ int main(int argc, char *argv[]) {
     std::cout << "save_outputs = \t"    << save_outputs << "\n";
     std::cout << "output_dir = \t"       << output_dir << "\n";
 
+    std::cout << "------------------\n";
+
+    std::cout << "Making Splines...\n";
     std::vector<double> rgrid = make_rgrid(rmin, rmax, ngrid);
+    double dr = (rmax-rmin) / (ngrid-1);
 
     list_of_vecs bsplines       =  generate_splines(nsplines, rgrid);
     list_of_vecs bsplines_diff  =  generate_spline_diffs(nsplines, rgrid);
@@ -117,99 +104,102 @@ int main(int argc, char *argv[]) {
 
     //-----------------------------------------
     //Make voltage vector
-    std::cout << "Generating Voltage potential for Z= " << Z << " and l= " << l << "\n";
+    std::cout << "Generating Voltage potentials \n";
 
     // Make potential func using greens function
     // Values are hardcoded for this question as we only care about lithium
     double d = 0.2;
     double h = 0.2;
     int Z = 3;
-    auto Vnucs_fs = [Z](double r) { return V_hydrogen(r, Z, 0)};
-    auto Vnucs_fl = [Z](double r) { return V_hydrogen(r, Z, 1)};
-    auto Vgr_f = [Z, d, h](double r) { return V_green(r, Z, d, h)};
 
-    std::vector<double> Vnuc    = vec_from_func(Vnuc_f, rgrid);
+    //Get potentials for both s and l orbitals
+    auto Vnuc_s_f = [Z](double r) { return V_hydrogen(r, Z, 0);};
+    auto Vnuc_l_f = [Z](double r) { return V_hydrogen(r, Z, 1);};
+    auto Vgr_f = [Z, d, h](double r) { return V_green(r, Z, d, h);};
+
+    std::vector<double> Vnuc_s  = vec_from_func(Vnuc_s_f, rgrid);
+    std::vector<double> Vnuc_l  = vec_from_func(Vnuc_l_f, rgrid);
     std::vector<double> Vgr     = vec_from_func(Vgr_f, rgrid);
 
-    std::vector<double>         = Vnuc + Vgr;
+    std::vector<double> Vs      = Vnuc_s + Vgr;
+    std::vector<double> Vl      = Vnuc_s + Vgr;
 
     std::cout << "Done.\n";
 
     //-----------------------------------------
     //Calculate first itteration
-    std::cout << "Calculating energy eigenstates...\n";
+    std::cout << "Calculating initial energy eigenstates...\n";
 
-    energy_and_waves energy_sols = solve_energies(V, bsplines, bsplines_diff);
+    energy_and_waves solutions_s = solve_energies(Vs, bsplines, bsplines_diff);
+    energy_and_waves solutions_l = solve_energies(Vl, bsplines, bsplines_diff);
+
+    std::cout << "Done.\n";
 
     //-----------------------------------------
     //Calculate adjustments
+    std::cout << "Calculating first order perturbations...\n";
     //Get y^{0}_{1s1s}
-    std::vector<double> y0_1s1s = YK::ykab(0, energy_sols.waves[0],energy_sols.waves[0],rgrid);
+    std::vector<double> y0_1s1s = YK::ykab(0, solutions_s.waves[0],solutions_s.waves[0],rgrid);
+    std::vector<double> adjust = 2 * y0_1s1s - Vgr; //No need to calculate this twice
 
+    for (int i=0; i<nsplines; i++){
+        solutions_s.energies[i]+=vint(solutions_s.waves[i]*solutions_s.waves[i]*adjust) * dr;
+        solutions_l.energies[i]+=vint(solutions_l.waves[i]*solutions_l.waves[i]*adjust) * dr;
+    }
 
-
+    std::cout << "Done.\n";
 
     //-----------------------------------------
     //Outputs and saving
 
-    std::cout << "Calculated energies:\n";
+    std::cout << "Calculated energies: \t s orbital \t l orbital \n";
     for (int i=0; i<5; i++){
-        std::cout << "Energy Level "<< i+1 << ":\t" << energy_sols.energies[i] << "\n";
+        std::cout << "Energy Level "<< i+1 << ":\t" << solutions_s.energies[i] << "\t" << solutions_l.energies[i] << "\n";
     }
 
-    std::cout << "Average Positions:\n";
+    std::cout << "Average Positions: \t s orbital \t l orbital \n";
     for (int i=0; i<5; i++){
-        std::cout << "Energy Level "<< i+1 << ":\t" << vint(energy_sols.waves[i]*energy_sols.waves[i]*rgrid) /  vint(energy_sols.waves[i]*energy_sols.waves[i]) << "\n";
+        std::cout << "Energy Level "<< i+1 << ":\t";
+        std::cout << vint(solutions_s.waves[i]*solutions_s.waves[i]*rgrid) /  vint(solutions_s.waves[i]*solutions_s.waves[i]) << "\t";
+        std::cout << vint(solutions_l.waves[i]*solutions_l.waves[i]*rgrid) /  vint(solutions_l.waves[i]*solutions_l.waves[i]) << "\t";
+        std::cout << "\n";
     }
 
     //Output solutions to .txt files
     if(save_outputs){
 
-            //Save Splines
-            std::ofstream spline_file(output_dir+"splines.txt");
-            std::ofstream spline_diffile(output_dir+"spline_diffs.txt");
-            for (int i = 0; i < ngrid; i++) {
+        //Save Potential
+        std::ofstream potfile(output_dir + "potential.txt");
+        for (int i=0; i<ngrid; i++){
+            potfile << rgrid[i] << "\t ";
+            potfile << Vs[i] << "\t" << Vl[i] << "\t" << Vs[i]+adjust[i]<< "\t" << Vl[i]+adjust[i];
+            potfile << "\n";
+        }
+        potfile.close();
 
-                spline_file << rgrid[i] << "\t ";
-                spline_diffile << rgrid[i] << "\t ";
+        //Save Solutions (Waves & Energies)
+        std::ofstream wavefile_s(output_dir + "waves_s.txt");
+        std::ofstream wavefile_l(output_dir + "waves_l.txt");
+        std::ofstream energyfile(output_dir + "energies.txt");
+        for (int i = 0; i < ngrid; i++) {
 
-                for (int j = 0; j < nsplines; j++) {
-                    spline_file << bsplines[j][i] << "\t ";
-                    spline_diffile << bsplines_diff[j][i] << "\t ";
-                }
-                spline_file << "\n";
-                spline_diffile << "\n";
-            }
-            spline_file.close();
-            spline_diffile.close();
+            wavefile_s << rgrid[i] << "\t ";
+            wavefile_l << rgrid[i] << "\t ";
 
-            //Save Potential
-            std::ofstream potfile(output_dir + "potential.txt");
-            for (int i=0; i<ngrid; i++){
-                potfile << rgrid[i] << "\t ";
-                potfile << V[i];
-                potfile << "\n";
-            }
-            potfile.close();
-
-            //Save Solutions (Waves & Energies)
-            std::ofstream wavefile(output_dir + "waves.txt");
-            std::ofstream energyfile(output_dir + "energies.txt");
-            for (int i = 0; i < ngrid; i++) {
-
-                wavefile << rgrid[i] << "\t ";
-
-                for (int j = 0; j < nsplines; j++) {
-                    wavefile << energy_sols.waves[j][i] << "\t ";
-                }
-                wavefile << "\n";
-            }
             for (int j = 0; j < nsplines; j++) {
-                energyfile << j+1 << "\t";
-                energyfile << energy_sols.energies[j] << "\n";
+                wavefile_s << solutions_s.waves[j][i] << "\t ";
+                wavefile_l << solutions_l.waves[j][i] << "\t ";
             }
-            energyfile.close();
-            wavefile.close();
+            wavefile_s << "\n";
+            wavefile_l << "\n";
+        }
+        for (int j = 0; j < nsplines; j++) {
+            energyfile << j+1 << "\t";
+            energyfile << solutions_s.energies[j] << "\t" << solutions_l.energies[j] << "\n";
+        }
+        energyfile.close();
+        wavefile_s.close();
+        wavefile_l.close();
     }
 
     std::cout << "Done.\n";
