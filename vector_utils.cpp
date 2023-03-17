@@ -13,6 +13,7 @@ using list_of_vecs = std::vector<std::vector<double>>;
 //=======================================================
 //Utility Functions
 void printv(const std::vector<double>& a){
+    /// Prints all elements in a 1D vector of doubles to std::cout. Good for debugging
     for (int i=0; i<a.size(); i++){
         std::cout << a[i] << ", ";
     }
@@ -89,8 +90,8 @@ std::vector<double> operator-(const double & a, std::vector<double> v){return(v-
 //=======================================================
 //Conversions & Integrations
 //Function to integrate over a vector
-double vint(const std::vector<double>& a){
-    //Integrates over a vector. For integration purposes. Uses simspsons rule;
+double vint(const std::vector<double>& a, double dx){
+    /// Integrates over a vector with constant spacing. Uses simspsons rule
     int n = a.size();
     if (n%2==0){std::cerr<<"Warning! Integrating vector with even number of points. Last point dropped. May be imprecise";}
     double out = 0;
@@ -106,6 +107,28 @@ double vint(const std::vector<double>& a){
     out += a.back();
 
     out /= 3;
+
+    // If differental element has been provided, use it
+    if (dx!=0){out*=dr;}
+
+    return out;
+}
+
+//Function to integrate over a vector
+std::vector<double> vdiff(const std::vector<double>& a, double dx){
+    /// Differentiates a vector with constant spacing
+
+    int n = a.size();
+    std::vector<double> out(n);
+
+    out[0] = a[1]-a[0];             //forward difference
+    for (int i=2; i<n; i++){
+        out[i]=a[i+1]-a[i-1];       //central difference
+    }
+    out[n-1] = (a[n-1]-a[n-2])/2;   //backward difference
+
+    // If differental element has been provided, use it
+    if (dx!=0){out/=dr;}
 
     return out;
 }

@@ -1,7 +1,7 @@
 /*
  * PHYS4070 Assignment 01
  * Bsc Phys Hon Semester 1 2023
- * Hugh McDougall- 43202007
+ * Hugh McDougall - 43202007
 */
 
 //Imports
@@ -115,8 +115,6 @@ int main(int argc, char *argv[]) {
     std::cout << "Generating Voltage potential for Z= " << Z << " and l= " << l << "\n";
 
     // Make potential func
-    double d = 0.2;
-    double h = 0.2;
     function_1D  Vfunc;
     Vfunc = [Z, l](double r) { return V_hydrogen(r, Z, l); };
     std::vector<double> V = vec_from_func(Vfunc, rgrid);

@@ -1,7 +1,7 @@
 /*
  * PHYS4070 Assignment 01
  * Bsc Phys Hon Semester 1 2023
- * Hugh McDougall- 43202007
+ * Hugh McDougall - 43202007
 */
 
 //Imports
@@ -122,7 +122,7 @@ int main(int argc, char *argv[]) {
     std::vector<double> Vgr     = vec_from_func(Vgr_f, rgrid);
 
     std::vector<double> Vs      = Vnuc_s + Vgr;
-    std::vector<double> Vl      = Vnuc_s + Vgr;
+    std::vector<double> Vl      = Vnuc_l + Vgr;
 
     std::cout << "Done.\n";
 

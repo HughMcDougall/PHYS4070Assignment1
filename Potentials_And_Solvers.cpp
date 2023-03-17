@@ -78,3 +78,25 @@ energy_and_waves solve_energies(std::vector<double> & V, const list_of_vecs & sp
     }
     return out;
 }
+
+energy_and_waves hartree(std::vector<double> & V, energy_and_waves & previous_solution, int itteration_number, int maxits, double tol){
+    /// Performs the Hartree method itteratively to get a self consistent solution
+    /// 'previous_solution' for first itteration should already be an orthogonal basis from solve_energies()
+
+    //Note to future hugh: do this with a loop, not a recursion. Saves fuckin' with memory limits
+
+    //Get diff vectors of previous itteration
+
+    //Get y^{0}_{1s1s}
+
+    //Adjust potential vector
+
+    //Generate H matrix
+
+    //Solve using lapack dsyev (basis should already be normalized)
+
+    //Recombine into new set
+
+    //Save onto previous_solution
+
+}

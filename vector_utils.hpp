@@ -56,7 +56,8 @@ std::vector<double> operator-(const double & a, std::vector<double> v);
 
 //Conversions & Integrations
 //Function to integrate over a vector
-double vint(const std::vector<double>& a);
+double vint(const std::vector<double>& a, double dx=0);
+double vdiff(const std::vector<double>& a, double dx=0);
 std::vector<double> make_rgrid(double rmin = 0.001, double rmax = 100, int n_grid = 101);
 std::vector<double> vec_from_func(const function_1D& V, const std::vector<double>& rgrid);
 
