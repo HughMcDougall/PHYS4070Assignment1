@@ -20,6 +20,7 @@ namespace lapack{
     MatrixAndVector LP_Eig_A(sqmatrix A);
 
     MatrixAndVector LP_Eig_AB(sqmatrix A, sqmatrix B);
+
 }
 
 #endif //ASSIGNMENT1_LP_SOLVERS_H

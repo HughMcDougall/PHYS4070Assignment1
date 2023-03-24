@@ -74,7 +74,7 @@ int main(int argc, char *argv[]) {
         if (argc > 6){
             output_dir = argv[6];
         } else{
-            output_dir  = "./outputs/B2/";
+            output_dir  = "./outputs/B3/";
         }
 
 
@@ -119,10 +119,9 @@ int main(int argc, char *argv[]) {
 
     std::vector<double> Vnuc_s  = vec_from_func(Vnuc_s_f, rgrid);
     std::vector<double> Vnuc_l  = vec_from_func(Vnuc_l_f, rgrid);
-    std::vector<double> Vgr     = vec_from_func(Vgr_f, rgrid);
+    std::vector<double> Vdir     = vec_from_func(Vgr_f, rgrid); //e-e interaction, begin as greens function
 
-    std::vector<double> Vs      = Vnuc_s + Vgr;
-    std::vector<double> Vl      = Vnuc_l + Vgr;
+    std::vector<double> Vs      = Vnuc_s + Vdir;
 
     std::cout << "Done.\n";
     std::cout << "----------------------------------\n";
@@ -132,9 +131,34 @@ int main(int argc, char *argv[]) {
     std::cout << "Calculating initial energy eigenstates...\n";
 
     energy_and_waves solutions_s = solve_energies(Vs, bsplines, bsplines_diff, dr);
+
+    std::cout << "Done.\n";
+
+    //-----------------------------------------
+    //Perform hartree itterations
+    std::cout << "Doing Hartree Procedure.\n";
+
+    int ittno = 0;
+    while (ittno < 20){
+        //Get Y^{0}_{1s}{1s}
+        std::cout<<"ittno:\t"<<ittno<<"\t 5S energy:\t"<<solutions_s.energies[0]<<"\n";
+
+        Vdir = YK::ykab(0, solutions_s.waves[0],solutions_s.waves[0],rgrid)*2.0;
+
+        //re-calculate potentials
+        Vs      = Vnuc_s + Vdir;
+
+        solutions_s = solve_energies(Vs, bsplines, bsplines_diff, dr);
+
+        ittno+=1;
+    }
+    //Use convergent 1s orbital to solve l orbital
+    std::vector<double> Vl      = Vnuc_l + Vdir;
     energy_and_waves solutions_l = solve_energies(Vl, bsplines, bsplines_diff, dr);
 
     std::cout << "Done.\n";
+
+    //-----------------------------------------
 
     std::cout << "Calculated energies: \t s orbital \t l orbital \n";
     for (int i=0; i<5; i++){
@@ -148,27 +172,6 @@ int main(int argc, char *argv[]) {
         std::cout << vint(solutions_l.waves[i]*solutions_l.waves[i]*rgrid,dr)<< "\t";
         std::cout << "\n";
     }
-
-    //-----------------------------------------
-    //Calculate first order adjustments
-    std::cout << "----------------------------------\n";
-    std::cout << "Calculating first order energy perturbations...\n";
-    //Get y^{0}_{1s1s}
-    std::vector<double> y0_1s1s = YK::ykab(0, solutions_s.waves[0],solutions_s.waves[0],rgrid);
-    std::vector<double> adjust = 2 * y0_1s1s - Vgr; //No need to calculate this twice
-
-    for (int i=0; i<nsplines; i++){
-        solutions_s.energies[i]+=vint(solutions_s.waves[i]*solutions_s.waves[i]*adjust, dr);
-        solutions_l.energies[i]+=vint(solutions_l.waves[i]*solutions_l.waves[i]*adjust, dr);
-    }
-
-    std::cout << "Done.\n";
-
-    std::cout << "Calculated energies: \t s orbital \t l orbital \n";
-    for (int i=0; i<5; i++){
-        std::cout << "Energy Level "<< i+1 << ":\t" << solutions_s.energies[i] << "\t" << solutions_l.energies[i] << "\n";
-    }
-
     //-----------------------------------------
     //Outputs and saving
 
@@ -179,7 +182,7 @@ int main(int argc, char *argv[]) {
         std::ofstream potfile(output_dir + "potential.txt");
         for (int i=0; i<ngrid; i++){
             potfile << rgrid[i] << "\t ";
-            potfile << Vs[i] << "\t" << Vl[i] << "\t" << Vs[i]+adjust[i]<< "\t" << Vl[i]+adjust[i];
+            potfile << Vs[i] << "\t" << Vl[i] << "\t";
             potfile << "\n";
         }
         potfile.close();

@@ -104,6 +104,7 @@ int main(int argc, char *argv[]) {
     std::cout << "output_dir = \t"       << output_dir << "\n";
 
     std::vector<double> rgrid = make_rgrid(rmin, rmax, ngrid);
+    double dr = (rmax-rmin) / (ngrid-1);
 
     list_of_vecs bsplines       =  generate_splines(nsplines, rgrid);
     list_of_vecs bsplines_diff  =  generate_spline_diffs(nsplines, rgrid);
@@ -125,7 +126,7 @@ int main(int argc, char *argv[]) {
     //Actually perform calculations
     std::cout << "Calculating energy eigenstates...\n";
 
-    energy_and_waves energy_sols = solve_energies(V, bsplines, bsplines_diff);
+    energy_and_waves energy_sols = solve_energies(V, bsplines, bsplines_diff, dr);
 
     //-----------------------------------------
     //Outputs and saving
@@ -137,7 +138,12 @@ int main(int argc, char *argv[]) {
 
     std::cout << "Average Positions:\n";
     for (int i=0; i<5; i++){
-        std::cout << "Energy Level "<< i+1 << ":\t" << vint(energy_sols.waves[i]*energy_sols.waves[i]*rgrid) /  vint(energy_sols.waves[i]*energy_sols.waves[i]) << "\n";
+        std::cout << "Energy Level "<< i+1 << ":\t" << vint(energy_sols.waves[i]*energy_sols.waves[i]*rgrid,dr)<< "\n";
+    }
+
+    std::cout << "Normalization Check:\n";
+    for (int i=0; i<5; i++){
+        std::cout << "Energy Level "<< i+1 << ":\t" << vint(energy_sols.waves[i]*energy_sols.waves[i],dr)<< "\n";
     }
 
     //Output solutions to .txt files

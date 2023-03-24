@@ -43,6 +43,22 @@ namespace matrix{
                     }
                 }
 
+            //Trace
+            double trace(){
+                /// Returns the matrix's trace, the sum of its diagonal elements
+                double out=0;
+                for (int i=0;i<_N;i++){out+=_datavec[i * _N + i];}
+                return(out);
+            }
+
+            //Diagonal
+            std::vector<double> diag(){
+                /// Returns the diagonal elements of the matrix in a vector
+                std::vector<double> out(_N);
+                for (int i=0;i<_N;i++){out[i]=_datavec[i * _N + i];}
+                return(out);
+            }
+
         };//sqmatrix
     // -----------------------------
     //Declare overload operators. Defined properly in cpp file
@@ -66,6 +82,6 @@ namespace matrix{
     sqmatrix operator/(sqmatrix a, const sqmatrix &b);
     sqmatrix operator/(sqmatrix a, const double &b);
 
-    };
+    } //Namespace
 
 #endif //ASSIGNMENT1_MATRIX_H
