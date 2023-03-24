@@ -14,6 +14,7 @@
 #include "vector_utils.hpp"
 #include "Potentials_And_Solvers.hpp"
 #include "calculateYK.hpp"
+#include "spline_eval.hpp"
 
 //=======================================================
 //Aliases & Holder Structs
@@ -30,40 +31,8 @@ double V_green(double r, int Z,  double d, double h ){
     /// Green's function, a first estimate of the electron-electron potential term from mean field theory
     return (Z-1) / r * h * (exp(r/d)-1 ) / (1+h*(exp(r/d)-1));
 }
-
 //=======================================================
-//Solvers
-
-energy_and_waves solve_energies(std::vector<double> & V, const list_of_vecs & splines, const list_of_vecs & spline_diff, double dr){
-    /// Function to get energies and energy eigenstates of a potential
-    /// Takes voltage vector 'V' and bspline + bspline_diff evaluations
-
-    // Sanity checks for inputs using assert
-    assert(splines.size()==spline_diff.size() && "Mismatch in spline and spline_diff numbers");
-    int nsplines = splines.size();
-    for (int i=0; i<nsplines; i++){
-        assert(V.size()==splines[i].size() && V.size() == spline_diff[i].size() && "Length of all splines and voltage must match");
-    }
-
-    //===========
-    // MAKE MATRICES
-    matrix::sqmatrix H = make_H(V,splines,spline_diff); //hamiltonian matrix
-    matrix::sqmatrix B = make_B(splines); //bspline diagonalization matrix
-
-    //===========
-    // USE LAPACK TO GET EIGENSTATES
-    lapack::MatrixAndVector solutions = lapack::LP_Eig_AB(H,B);
-
-    //===========
-    // ASSEMBLE INTO WAVEFUNCTIONS AND OUTPUT
-    energy_and_waves out(nsplines); // empty object
-
-    out.energies = std::move(solutions.vector); //Save eigenstates as energies
-    out.waves    = mix_modes(solutions.matrix, splines, dr);
-
-    //===========
-    return out;
-}
+//Compact procedures / matrix construction
 
 matrix::sqmatrix make_H(const std::vector<double> & V, const list_of_vecs & waves, const list_of_vecs & waves_diffs, double dr) {
     /// Makes the non-exchange hamiltonian matrix for a set of waves and their derivatives
@@ -76,6 +45,42 @@ matrix::sqmatrix make_H(const std::vector<double> & V, const list_of_vecs & wave
 
             //Do integrals to get H elements
             H(i,j) = 0.5 * vint(waves_diffs[i] * waves_diffs[j], dr) + vint(waves[i] * V * waves[j], dr);
+
+            //Fill lower triangular terms
+            if (i!=j){
+                H(j,i) = H(i,j);
+            }
+        }
+    }
+    return(H);
+}
+
+
+matrix::sqmatrix make_H_exchange(const list_of_vecs & waves, const std::vector<double> & P1s_wave, int l, const std::vector<double> & rgrid){
+    /// Constructs the hamiltonian matrix term that encodes the exchange potential
+
+    int nwaves = waves.size();
+    int ngrid  = rgrid.size();
+    double dr = (rgrid[ngrid] - rgrid[0]) / (ngrid-1);
+    matrix::sqmatrix H(nwaves);
+
+    //Get angular coefficient
+    double lam;
+    if(l==0){lam=1/2;} else { lam=1/6;}
+
+    //Calculate RHS of exchange potential terms
+    list_of_vecs Vex_bj(nwaves);
+    for (int i=0; i<nwaves; i++){
+        Vex_bj[i].resize(waves[0].size());
+        Vex_bj[i] = -2*lam*P1s_wave * YK::ykab(l, P1s_wave, waves[i], rgrid);
+
+    }
+
+    for (int i=0; i<nwaves; i++){
+        for (int j=i; j<nwaves; j++){
+
+            //Do integrals to get H elements
+            H(i,j) = vint(waves[i]*Vex_bj[j], dr);
 
             //Fill lower triangular terms
             if (i!=j){
@@ -133,144 +138,177 @@ list_of_vecs mix_modes(const matrix::sqmatrix & mat, const list_of_vecs & old_mo
     return out;
 }
 
-std::vector<energy_and_waves> hartree(const std::vector<double> & Vnuc_s,const std::vector<double> & Vnuc_l, std::vector<double> & rgrid,
-                         const energy_and_waves & initial_solution_sorbital, const energy_and_waves & initial_solution_lorbital,
-                         int maxits, double tol){
-    /// Performs the Hartree method itteratively to get a self consistent solution for the s orbitals and applies to the l orbitals
-    /// 'previous_solutions' for first itteration should already be an orthogonal basis from solve_energies()
 
-    // Asserts and number of evals
-    assert (initial_solution_sorbital.waves.size() == initial_solution_lorbital.waves.size() && "Initial solutions in hartree() must have same wave number");
-    int nwaves = initial_solution_sorbital.waves.size();
+//=======================================================
+//Solvers
 
-    int ngrid  = rgrid.size();
-    assert (Vnuc_s.size()==Vnuc_l.size() && "Potential vectors in hartree() must be same length as rgrid");
-    for (int i=0; i<nwaves; i++){
-        assert(initial_solution_sorbital.waves[i].size() ==  ngrid && initial_solution_lorbital.waves[i].size() == ngrid && "All initial sol waves in hartree() must be save dimension as rgrid");
+energy_and_waves solve_energies(std::vector<double> & V, const list_of_vecs & splines, const list_of_vecs & spline_diff, double dr){
+    /// Function to get energies and energy eigenstates of a potential
+    /// Takes voltage vector 'V' and bspline + bspline_diff evaluations
+
+    // Sanity checks for inputs using assert
+    assert(splines.size()==spline_diff.size() && "Mismatch in spline and spline_diff numbers");
+    int nsplines = splines.size();
+    for (int i=0; i<nsplines; i++){
+        assert(V.size()==splines[i].size() && V.size() == spline_diff[i].size() && "Length of all splines and voltage must match");
     }
-
-    assert(maxits>0 && tol<1 && "Incorrect hartree convergence limits in hartree()");
-
-    //------------------------------------------
-
-    //storage for Output, two save spaces for solution storing struc
-    std::vector<energy_and_waves> out(2, energy_and_waves(nwaves));
-    out[0].energies=vcopy(initial_solution_sorbital.energies);
-
-    //Establish number of evals
-    double dr  = (rgrid.back()-rgrid.front()) / (ngrid-1);
-
-    //Make storage spaces for solutions
-    list_of_vecs waves(nwaves);
-    list_of_vecs waves_new(nwaves);
-    list_of_vecs waves_diffs(nwaves);
-
-    //l_orbitals
-    list_of_vecs wavel(nwaves);
-    list_of_vecs wavel_diffs(nwaves);
-
-    for (int i=0; i<nwaves; i++){
-        waves[i] =vcopy(initial_solution_sorbital.waves[i]);
-        waves_new[i].resize(ngrid);
-        waves_diffs[i].resize(ngrid);
-
-        //Don't itterate l orbitals in hartree so don't need wavel_new
-        wavel[i].resize(ngrid);
-        wavel_diffs[i] = vdiff(initial_solution_lorbital.waves[i],dr);
-    }
-
-    //Make vectors and matrices for use in loop
-    std::vector<double> V(ngrid);
-    std::vector<double> y0_1s1s(ngrid);
-    matrix::sqmatrix H(nwaves);
-    matrix::sqmatrix B(nwaves);
 
     //===========
-    // S ORBITAL
-    //--------------------------------
-    //Do Hartree Itterations to get s orbitals
-    int ittno = 0;
-    bool converged = false;
-    lapack::MatrixAndVector solutions(nwaves); // object for storing outputs of lapack functions
-
-    //Main Hartree Loop for solving s orbital
-    while (ittno<maxits && not converged){
-        ittno+=1;
-
-        //Get y^{0}_{1s1s} and wave derivatives for populating H matrix
-        for (int i=0; i<nwaves; i++){ waves_diffs[i] = vdiff(waves[i], dr);} // Get derivatives
-        y0_1s1s = YK::ykab(0, waves[0],waves[0],rgrid);
-        V = Vnuc_s + 2 * y0_1s1s;
-
-        //Loop over upper triangular terms to populate H matrix
-        H = make_H(V, waves, waves_diffs, dr);
-        B = make_B(waves, dr);
-
-        //Solve using lapack dsyev (basis should already be orthogonal)
-        solutions = lapack::LP_Eig_AB(H,B);
-
-        //Recombine old waves into new solutions
-        for (int i=0; i<nwaves; i++){
-            waves_new[i]*=0; // Zero out old elements
-            for (int j=0; j<nwaves; j++){
-                waves_new[i]    +=  solutions.matrix(i,j) * waves[j];
-            }
-        }
-
-        // Check convergence based on energies
-        std::cout<<ittno<<"\t";
-        converged=true;
-        for( double el : solutions.vector/out[0].energies-1 ){
-            if (abs(el)>tol){
-                converged=false;
-            }
-            std::cout<< el<<", ";
-        }
-        std::cout<< "\n";
-
-
-
-        for (int i=0; i<nwaves; i++){waves[i] = waves[i] *(vcopy(waves_new[i])+waves[i]);} // update 'old' wave to new wave. BROKEN. WAS USING COPY
-        out[0].energies=vcopy(solutions.vector);
-    } //Itterations
-
-    //Save S-orbital results
-    out[0].energies = std::move(solutions.vector); //Save eigenstates as energies
-    out[0].waves    = waves;
+    // MAKE MATRICES
+    matrix::sqmatrix H = make_H(V,splines,spline_diff); //hamiltonian matrix
+    matrix::sqmatrix B = make_B(splines); //bspline diagonalization matrix
 
     //===========
-    // L ORBITAL
-    // Use convergent 1s orbital to calculate l orbitals
-    y0_1s1s = YK::ykab(0, waves[0],waves[0],rgrid);
-    V = Vnuc_l + 2 * y0_1s1s;
-    for (int i=0; i<nwaves; i++){
-        for (int j=i; j<nwaves; j++){
+    // USE LAPACK TO GET EIGENSTATES
+    lapack::MatrixAndVector solutions = lapack::LP_Eig_AB(H,B);
 
-            //Do integrals. No 'dr' integral element as it cancels out on either side of the eigenstate eqn
-            H(i,j) = 0.5 * vint(wavel_diffs[i] * wavel_diffs[j],dr) + vint(wavel[i] * V * wavel[j], dr);
+    //===========
+    // ASSEMBLE INTO WAVEFUNCTIONS AND OUTPUT
+    energy_and_waves out(nsplines); // empty object
 
-            //Fill lower triangular terms
-            if (i!=j){
-                H(j,i) = H(i,j);
-            }
-        }
-    }
-    solutions = lapack::LP_Eig_A(H);
+    out.energies = std::move(solutions.vector); //Save eigenstates as energies
+    out.waves    = mix_modes(solutions.matrix, splines, dr);
 
-    //Recombine old waves into new solutions
-    for (int i=0; i<nwaves; i++){
-        for (int j=0; j<nwaves; j++){
-            wavel[i]    +=  solutions.matrix(i,j) * initial_solution_lorbital.waves[j];
-        }
-    }
-
-    //Save l-orbital results
-    out[1].energies = std::move(solutions.vector); //Save eigenstates as energies
-    out[1].waves    = wavel;
-
+    //===========
     return out;
+}
 
 
+energy_and_waves single_step(const matrix::sqmatrix & H, energy_and_waves system, double dr){
+    /// Performs a single update on an ortho-normal set of waves
+    // [MISSINGNO] Safety checks
+
+    // Use linalg to get solutions
+    lapack::MatrixAndVector solutions = lapack::LP_Eig_A(H);
+
+    // mix_modes
+    system.energies = std::move(solutions.vector);
+    system.waves    = mix_modes(solutions.matrix, system.waves, dr);
+
+    // return
+    return(system);
+}
+
+std::vector<energy_and_waves> hartree(std::vector<double> Vnuc_s, std::vector<double> Vnuc_l, std::vector<double> rgrid,
+                                      energy_and_waves s_sols, energy_and_waves l_sols,
+                                      const  list_of_vecs & bsplines, const list_of_vecs & bsplines_diff,
+                                      int maxits, double tol, int ens_to_check){
 
 
 }
+
+
+std::vector<energy_and_waves> hartree_fock(std::vector<double> Vnuc_s, std::vector<double> Vnuc_l, std::vector<double> rgrid,
+                              energy_and_waves s_sols, energy_and_waves l_sols,
+                              int maxits, double tol, int ens_to_check){
+
+    // [MISSINGNO] Safety checks and add const refs
+
+    //===============================
+
+    //Setup
+    int ngrid = rgrid.size();
+    int nwaves = s_sols.energies.size();
+    double dr = (rgrid[ngrid] - rgrid[0]) / (ngrid-1);
+
+    list_of_vecs bsplines       =  generate_splines(nwaves, rgrid);
+    list_of_vecs bsplines_diff  =  generate_spline_diffs(nwaves, rgrid);
+
+    //Objects to itterate in loop
+    //list_of_vecs & waves = s_sols.waves;
+    list_of_vecs wave_diffs(nwaves);
+    //std::vector<double> & P1s_wave = waves[0];
+
+    matrix::sqmatrix H(nwaves);
+    std::vector<double> V(ngrid);
+    std::vector<double> Vdir(ngrid);
+
+    //Convergence loop properties
+    int ittno;
+    double e_diff;
+    std::vector<double> e_old(ens_to_check);
+
+    //===============================
+    //S orbital calculation
+    std::cout << "Beginning S orbital itterations \n";
+    ittno=0;
+    e_diff=tol*2;
+    for (int i=0; i<ens_to_check; i++){ e_old[i]=s_sols.energies[i];}
+
+    while(ittno<maxits){
+        e_diff=0;
+        //Get derivatives of waves
+        for(int i=0; i<nwaves; i++){
+            //wave_diffs[i]= vdiff(s_sols.waves[i],dr);
+        }
+
+        //Calculate Direct potential
+        Vdir = YK::ykab(0, s_sols.waves[0],s_sols.waves[0],rgrid) * 2;
+        V = Vnuc_s + Vdir;
+
+        //Make Hamiltonian
+        //H = make_H(V, waves, wave_diffs, dr);// + make_H_exchange(s_sols.waves, s_sols.waves[0], 0, rgrid);
+
+        //Do Update
+        //s_sols = single_step(H, s_sols, dr);
+
+        s_sols = solve_energies(V, bsplines, bsplines_diff, dr);
+
+        //Check changes in energies
+        e_diff=0;
+        for (int i=0; i<ens_to_check; i++){
+            e_diff=std::max(e_diff, fabs(e_old[i]/s_sols.energies[i]-1));
+            e_old[i]=s_sols.energies[i];
+        }
+
+        //Advance and output
+        ittno+=1;
+        std::cout<<"ittno:\t"<<ittno<<"\t Fractional change:\t"<<e_diff<<"\n";
+        printv(e_old);
+
+        }
+
+    //===============================
+    //L orbital calculation
+    std::cout << "Beginning L orbital itterations \n";
+    //waves = l_sols.waves;
+    ittno = 0;
+    e_diff=tol*2;
+    for (int i=0; i<ens_to_check; i++){ e_old[i]=l_sols.energies[i];}
+    Vdir = YK::ykab(0, s_sols.waves[0],s_sols.waves[0],rgrid)  * 2;
+    while(ittno<maxits){
+        e_diff=0;
+        //Get derivatives of waves
+        std::cout << ittno << "\n";
+        for(int i=0; i<nwaves; i++){wave_diffs[i]= vdiff(l_sols.waves[i],dr);}
+
+        //Calculate potential
+        V = Vnuc_l + Vdir;
+
+        //Make Hamiltonian
+        H = make_H(V, l_sols.waves, wave_diffs, dr);// + make_H_exchange(l_sols.waves, s_sols.waves[0], 1, rgrid);
+
+        //Do Update
+        l_sols = single_step(H, l_sols, dr);
+
+        //[MISSINGNO] - energy checks
+
+        ittno+=1;
+
+        //Check changes in energies
+        e_diff=0;
+        for (int i=0; i<ens_to_check; i++){
+            e_diff=std::max(e_diff, fabs(e_old[i]/l_sols.energies[i]-1));
+            e_old[i]=l_sols.energies[i];
+        }
+
+        //Advance and output
+        ittno+=1;
+        std::cout<<"ittno:\t"<<ittno<<"\t Fractional change:\t"<<e_diff<<"\n";
+    }
+
+    //===========
+    std::vector<energy_and_waves> out = {s_sols,l_sols};
+    return out;
+}
+

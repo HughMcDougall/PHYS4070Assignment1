@@ -175,7 +175,7 @@ int main(int argc, char *argv[]) {
     //Output solutions to .txt files
     if(save_outputs){
 
-        //Save Potential
+        //Save final potential
         std::ofstream potfile(output_dir + "potential.txt");
         for (int i=0; i<ngrid; i++){
             potfile << rgrid[i] << "\t ";

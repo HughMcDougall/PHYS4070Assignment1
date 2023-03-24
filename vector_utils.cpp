@@ -122,10 +122,10 @@ std::vector<double> vdiff(const std::vector<double>& a, double dx){
     std::vector<double> out(n);
 
     out[0] = a[1]-a[0];             //forward difference
-    for (int i=2; i<n; i++){
-        out[i]=a[i+1]-a[i-1];       //central difference
+    for (int i=1; i<n-1; i++){
+        out[i]=(a[i+1]-a[i-1])/2;       //central difference
     }
-    out[n-1] = (a[n-1]-a[n-2])/2;   //backward difference
+    out[n-1] = a[n-1]-a[n-2];   //backward difference
 
     // If differental element has been provided, use it
     if (dx!=0){out/=dx;}

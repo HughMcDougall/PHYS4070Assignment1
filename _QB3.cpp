@@ -31,7 +31,7 @@ using list_of_vecs = std::vector<std::vector<double>>;
 int main(int argc, char *argv[]) {
     /// Read Inputs
     /// Order of inputs : nsplines,   ngrid,   rmin,   rmax,   save_outputs,   output_dir
-    /// Default inputs  : 60,         5001,   0.001,  100,     False,           "./outputs_B2"
+    /// Default inputs  : 60,         5001,   0.001,  100,     False,           "./outputs_B3"
 
     std::cout << "Program Starting\n";
     int nsplines, ngrid;
@@ -136,44 +136,50 @@ int main(int argc, char *argv[]) {
 
     //-----------------------------------------
     //Perform hartree itterations
+    std::cout << "----------------------------------\n";
     std::cout << "Doing Hartree Procedure.\n";
 
     int ittno = 0;
     int maxits = 40;
 
-    double tol = 0.05;
+    double tol = 0.001;
     double echange = tol*10;
-    double e_old = 0;
+    std::vector<double> e_old(5);
 
     while (ittno < maxits && echange>tol){
         //Get Y^{0}_{1s}{1s}
-        std::cout<<"ittno:\t"<<ittno<<"\t 1S energy:\t"<<solutions_s.energies[0]<<"\t Marginal change:\t"<<echange<<"\n";
 
         Vdir = YK::ykab(0, solutions_s.waves[0],solutions_s.waves[0],rgrid)*2.0;
 
-        //re-calculate potentials
+        //re-calculate potential and use to get solution
         Vs      = Vnuc_s + Vdir;
-
         solutions_s = solve_energies(Vs, bsplines, bsplines_diff, dr);
-        echange = abs(e_old/solutions_s.energies[0]-1);
-        e_old=solutions_s.energies[0];
+
+        //Check changes in energies
+        echange=0;
+        for (int i=0; i<5; i++){
+            echange=std::max(echange, fabs(e_old[i]/solutions_s.energies[i]-1));
+            e_old[i]=solutions_s.energies[i];
+        }
 
         ittno+=1;
+        std::cout<<"ittno:\t"<<ittno<<"\t Fractional change:\t"<<echange<<"\n";
     }
     //Use convergent 1s orbital to solve l orbital
     std::vector<double> Vl      = Vnuc_l + Vdir;
     energy_and_waves solutions_l = solve_energies(Vl, bsplines, bsplines_diff, dr);
 
     std::cout << "Done.\n";
+    std::cout << "----------------------------------\n";
 
     //-----------------------------------------
 
-    std::cout << "Calculated energies: \t s orbital \t l orbital \n";
+    std::cout << "\nCalculated energies: \t s orbital \t l orbital \n";
     for (int i=0; i<5; i++){
         std::cout << "Energy Level "<< i+1 << ":\t" << solutions_s.energies[i] << "\t" << solutions_l.energies[i] << "\n";
     }
 
-    std::cout << "Average Positions: \t s orbital \t l orbital \n";
+    std::cout << "\nAverage Positions: \t s orbital \t l orbital \n";
     for (int i=0; i<5; i++){
         std::cout << "Energy Level "<< i+1 << ":\t";
         std::cout << vint(solutions_s.waves[i]*solutions_s.waves[i]*rgrid,dr)<< "\t";
