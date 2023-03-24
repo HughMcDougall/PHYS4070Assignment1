@@ -139,9 +139,15 @@ int main(int argc, char *argv[]) {
     std::cout << "Doing Hartree Procedure.\n";
 
     int ittno = 0;
-    while (ittno < 20){
+    int maxits = 40;
+
+    double tol = 0.05;
+    double echange = tol*10;
+    double e_old = 0;
+
+    while (ittno < maxits && echange>tol){
         //Get Y^{0}_{1s}{1s}
-        std::cout<<"ittno:\t"<<ittno<<"\t 5S energy:\t"<<solutions_s.energies[0]<<"\n";
+        std::cout<<"ittno:\t"<<ittno<<"\t 1S energy:\t"<<solutions_s.energies[0]<<"\t Marginal change:\t"<<echange<<"\n";
 
         Vdir = YK::ykab(0, solutions_s.waves[0],solutions_s.waves[0],rgrid)*2.0;
 
@@ -149,6 +155,8 @@ int main(int argc, char *argv[]) {
         Vs      = Vnuc_s + Vdir;
 
         solutions_s = solve_energies(Vs, bsplines, bsplines_diff, dr);
+        echange = abs(e_old/solutions_s.energies[0]-1);
+        e_old=solutions_s.energies[0];
 
         ittno+=1;
     }
