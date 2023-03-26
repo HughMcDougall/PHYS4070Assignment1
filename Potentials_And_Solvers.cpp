@@ -66,13 +66,13 @@ matrix::sqmatrix make_H_exchange(const list_of_vecs & waves, const std::vector<d
 
     //Get angular coefficient
     double lam;
-    if(l==0){ lam=1/2; } else { lam=1/6;}
+    if(l==0){ lam=1.0/2.0; } else { lam=1.0/6.0;}
 
     //Calculate RHS of exchange potential terms
     list_of_vecs Vex_bj(nwaves);
     for (int j=0; j<nwaves; j++){
         Vex_bj[j].resize(ngrid);
-        Vex_bj[j] = YK::ykab(l, P1s_wave, waves[j], rgrid) * P1s_wave * -2 * lam;
+        Vex_bj[j] = YK::ykab(l, P1s_wave, waves[j], rgrid) * P1s_wave * -2.0 * lam;
     }
 
     for (int i=0; i<nwaves; i++){
@@ -206,7 +206,7 @@ std::vector<energy_and_waves> hartree(const std::vector<double> & rgrid, const s
     for (int i=0; i<ens_to_check; i++){ e_old[i]=solutions_s.energies[i]; }
 
     std::cout<< "Doing S-Orbital iterations in hartree(): \n \n";
-    std::cout<<"ittno"<<"\t"<<"e_2s"<<"\t"<<"echange"<<"\n";
+    std::cout<<"ittno"<<"\t"<<"e_1s"<<"\t"<<"e_2s"<<"\t"<<"echange"<<"\n";
     while (ittno < maxits && echange>tol){
         //Get Y^{0}_{1s}{1s}
         Vdir = YK::ykab(0, solutions_s.waves[0],solutions_s.waves[0],rgrid)*2.0;
@@ -223,7 +223,7 @@ std::vector<energy_and_waves> hartree(const std::vector<double> & rgrid, const s
         }
 
         ittno+=1;
-        std::cout<<ittno<<"\t"<<solutions_s.energies[1]<<"\t"<<echange<<"\n";
+        std::cout<<ittno<<"\t"<<solutions_s.energies[0]<<"\t"<<solutions_s.energies[1]<<"\t"<<echange<<"\n";
     }
     //Use convergent 1s orbital to solve l orbital
     V      = Vnuc_l + Vdir;
@@ -260,7 +260,7 @@ std::vector<energy_and_waves> hartree_fast(const std::vector<double> & rgrid, co
     for (int i=0; i<ens_to_check; i++){ e_old[i]=solutions_s.energies[i]; }
 
     std::cout<< "Doing S-Orbital iterations in hartree_fast(): \n \n";
-    std::cout<<"ittno"<<"\t"<<"e_2s"<<"\t"<<"echange"<<"\n";
+    std::cout<<"ittno"<<"\t"<<"e_1s"<<"\t"<<"e_2s"<<"\t"<<"echange"<<"\n";
     while (ittno < maxits && echange>tol){
 
         for (int i=0;i<nwaves;i++){ wavediffs[i] = vdiff(solutions_s.waves[i],dr);}
@@ -281,7 +281,7 @@ std::vector<energy_and_waves> hartree_fast(const std::vector<double> & rgrid, co
         }
 
         ittno+=1;
-        std::cout<<ittno<<"\t"<<solutions_s.energies[1]<<"\t"<<echange<<"\n";
+        std::cout<<ittno<<"\t"<<solutions_s.energies[0]<<"\t"<<solutions_s.energies[1]<<"\t"<<echange<<"\n";
     }
     //Use convergent 1s orbital to solve l orbital
     V      = Vnuc_l + Vdir;
@@ -317,7 +317,7 @@ std::vector<energy_and_waves> hartree_fock(const std::vector<double> & rgrid, co
     //==================================================================
 
     std::cout<< "Doing S-Orbital iterations in hartree_fock(): \n \n";
-    std::cout<<"ittno"<<"\t"<<"e_2s"<<"\t"<<"echange"<<"\n";
+    std::cout<<"ittno"<<"\t"<<"e_1s"<<"\t"<<"e_2s"<<"\t"<<"echange"<<"\n";
     int ittno = 0;
     double echange = tol*10;
     std::vector<double> e_old(ens_to_check);
@@ -344,13 +344,13 @@ std::vector<energy_and_waves> hartree_fock(const std::vector<double> & rgrid, co
         }
 
         ittno+=1;
-        std::cout<<ittno<<"\t"<<solutions_s.energies[1]<<"\t"<<echange<<"\n";
+        std::cout<<ittno<<"\t"<<solutions_s.energies[0]<<"\t"<<solutions_s.energies[1]<<"\t"<<echange<<"\n";
     }
 
     //==================================================================
 
-    std::cout<< "Doing L-Orbital iterations in hartree_fock(): \n \n";
-    std::cout<<"ittno"<<"\t"<<"e_2p"<<"\t"<<"echange"<<"\n";
+    std::cout<< "Doing P-Orbital iterations in hartree_fock(): \n \n";
+    std::cout<<"ittno"<<"\t"<<"e_2s"<<"\t"<<"echange"<<"\n";
     ittno=0;
     echange = tol*2;
     for (int i=0; i<ens_to_check; i++){ e_old[i]=solutions_l.energies[i]; }
@@ -432,12 +432,12 @@ std::vector<energy_and_waves> hartree_fock_fast(const std::vector<double> & rgri
         }
 
         ittno+=1;
-        std::cout<<ittno<<"\t"<<solutions_s.energies[1]<<"\t"<<echange<<"\n";
+        std::cout<<ittno<<"\t"<<solutions_s.energies[0]<<"\t"<<solutions_s.energies[1]<<"\t"<<echange<<"\n";
     }
 
     //==================================================================
 
-    std::cout<< "Doing L-Orbital iterations in hartree_fock_fast(): \n \n";
+    std::cout<< "Doing P-Orbital iterations in hartree_fock_fast(): \n \n";
     std::cout<<"ittno"<<"\t"<<"e_2p"<<"\t"<<"echange"<<"\n";
     ittno=0;
     echange = tol*2;

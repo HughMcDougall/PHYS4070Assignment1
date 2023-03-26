@@ -33,7 +33,11 @@ int main(int argc, char *argv[]) {
     /// Order of inputs : nsplines,   ngrid,   rmin,   rmax,   save_outputs,   output_dir
     /// Default inputs  : 60,         5001,   0.001,  100,     False,           "./outputs_B2"
 
-    std::cout << "Program Starting\n";
+    std::cout << "------------------\n";
+    std::cout << "------------------\n";
+    std::cout << "Starting Question B2\n";
+    std::cout << "------------------\n";
+    std::cout << "------------------\n";
     int nsplines, ngrid;
     double rmin, rmax;
     bool save_outputs;
@@ -155,19 +159,35 @@ int main(int argc, char *argv[]) {
     std::cout << "Calculating first order energy perturbations...\n";
     //Get y^{0}_{1s1s}
     std::vector<double> y0_1s1s = YK::ykab(0, solutions_s.waves[0],solutions_s.waves[0],rgrid);
-    std::vector<double> adjust = 2 * y0_1s1s - Vgr; //No need to calculate this twice
+    std::vector<double> adjust = 2.0 * y0_1s1s - Vgr; //No need to calculate this twice
+
+    std::vector<double> deltaE_s(nsplines);
+    std::vector<double> deltaE_l(nsplines);
 
     for (int i=0; i<nsplines; i++){
-        solutions_s.energies[i]+=vint(solutions_s.waves[i]*solutions_s.waves[i]*adjust, dr);
-        solutions_l.energies[i]+=vint(solutions_l.waves[i]*solutions_l.waves[i]*adjust, dr);
+        deltaE_s[i] =  vint(solutions_s.waves[i]*solutions_s.waves[i]*adjust, dr);
+        deltaE_l[i] =  vint(solutions_l.waves[i]*solutions_l.waves[i]*adjust, dr);
     }
 
     std::cout << "Done.\n";
 
     std::cout << "Calculated energies: \t s orbital \t l orbital \n";
     for (int i=0; i<5; i++){
-        std::cout << "Energy Level "<< i+1 << ":\t" << solutions_s.energies[i] << "\t" << solutions_l.energies[i] << "\n";
+        std::cout << "Energy Level "<< i+1 <<   ":\t" << solutions_s.energies[i]+deltaE_s[i];
+        std::cout <<                             "\t" << solutions_l.energies[i]+deltaE_l[i] << "\n";
     }
+
+    //Get relaxation time
+    double R = vint(solutions_l.waves[0] * rgrid * solutions_s.waves[1],dr);
+    double omega = fabs(solutions_l.energies[0] - solutions_s.energies[1]);
+    double gamma = 2.0/3.0 * pow(R,2) * pow(omega,3) * 1.071 * 10;
+    double T = 1/gamma;
+    std::cout << "Relaxation time with greens is ~ \t " << T <<" ns \n";
+
+    omega = fabs((solutions_l.energies[0]+deltaE_l[0]) - (solutions_s.energies[1] +deltaE_s[1]));
+    gamma = 2.0/3.0 * pow(R,2) * pow(omega,3) * 1.071 * 10;
+    T = 1/gamma;
+    std::cout << "Relaxation time with perturbation is ~ \t " << T <<" ns \n";
 
     //-----------------------------------------
     //Outputs and saving
@@ -179,7 +199,9 @@ int main(int argc, char *argv[]) {
         std::ofstream potfile(output_dir + "potential.txt");
         for (int i=0; i<ngrid; i++){
             potfile << rgrid[i] << "\t ";
-            potfile << Vs[i] << "\t" << Vl[i] << "\t" << Vs[i]+adjust[i]<< "\t" << Vl[i]+adjust[i];
+            potfile << Vnuc_s[i] << "\t" << Vnuc_l[i] << "\t";
+            potfile << Vs[i] << "\t" << Vl[i] << "\t";
+            potfile << Vnuc_s[i]+2.0*y0_1s1s[i]<< "\t" << Vnuc_l[i]+2.0*y0_1s1s[i];
             potfile << "\n";
         }
         potfile.close();
@@ -188,6 +210,7 @@ int main(int argc, char *argv[]) {
         std::ofstream wavefile_s(output_dir + "waves_s.txt");
         std::ofstream wavefile_l(output_dir + "waves_l.txt");
         std::ofstream energyfile(output_dir + "energies.txt");
+        std::ofstream avposfile(output_dir + "avpos.txt");
         for (int i = 0; i < ngrid; i++) {
 
             wavefile_s << rgrid[i] << "\t ";
@@ -200,13 +223,20 @@ int main(int argc, char *argv[]) {
             wavefile_s << "\n";
             wavefile_l << "\n";
         }
+
         for (int j = 0; j < nsplines; j++) {
             energyfile << j+1 << "\t";
-            energyfile << solutions_s.energies[j] << "\t" << solutions_l.energies[j] << "\n";
+            energyfile << solutions_s.energies[j]               << "\t" << solutions_l.energies[j]              << "\t";
+            energyfile << solutions_s.energies[j]+deltaE_s[j]   << "\t" << solutions_l.energies[j]+deltaE_l[j]  << "\n";
+
+            avposfile << j+1 << "\t";
+            avposfile << vint(solutions_s.waves[j]*solutions_s.waves[j]*rgrid,dr) << "\t" << vint(solutions_l.waves[j]*solutions_l.waves[j]*rgrid,dr) << "\n";
+
         }
         energyfile.close();
         wavefile_s.close();
         wavefile_l.close();
+        avposfile.close();
     }
 
     std::cout << "Done.\n";

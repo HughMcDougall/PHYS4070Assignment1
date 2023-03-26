@@ -33,7 +33,11 @@ int main(int argc, char *argv[]) {
     /// Order of inputs : nsplines,   ngrid,   rmin,   rmax,   save_outputs,   output_dir
     /// Default inputs  : 60,         5001,   0.001,  100,     False,           "./outputs_B1"
 
-    std::cout << "Program Starting\n";
+    std::cout << "------------------\n";
+    std::cout << "------------------\n";
+    std::cout << "Starting Question B1\n";
+    std::cout << "------------------\n";
+    std::cout << "------------------\n";
     int nsplines, ngrid;
     double rmin, rmax;
     bool save_outputs;
@@ -141,6 +145,13 @@ int main(int argc, char *argv[]) {
         std::cout << "\n";
     }
 
+    //Get relaxation time
+    double R = vint(solutions_l.waves[0] * rgrid * solutions_s.waves[1],dr);
+    double omega = fabs(solutions_l.energies[0] - solutions_s.energies[1]);
+    double gamma = 2.0/3.0 * pow(R,2) * pow(omega,3) * 1.071 * 10;
+    double T = 1/gamma;
+    std::cout << "Relaxation time is ~ \t " << T <<" ns \n";
+
     //-----------------------------------------
     //Outputs and saving
 
@@ -151,7 +162,7 @@ int main(int argc, char *argv[]) {
         std::ofstream potfile(output_dir + "potential.txt");
         for (int i=0; i<ngrid; i++){
             potfile << rgrid[i] << "\t ";
-            potfile << Vs[i] << "\t" << Vl[i] << "\t" << Vs[i]+adjust[i]<< "\t" << Vl[i]+adjust[i];
+            potfile << Vs[i] << "\t" << Vl[i] << "\t";
             potfile << "\n";
         }
         potfile.close();
@@ -160,6 +171,7 @@ int main(int argc, char *argv[]) {
         std::ofstream wavefile_s(output_dir + "waves_s.txt");
         std::ofstream wavefile_l(output_dir + "waves_l.txt");
         std::ofstream energyfile(output_dir + "energies.txt");
+        std::ofstream avposfile(output_dir + "avpos.txt");
         for (int i = 0; i < ngrid; i++) {
 
             wavefile_s << rgrid[i] << "\t ";
@@ -175,10 +187,14 @@ int main(int argc, char *argv[]) {
         for (int j = 0; j < nsplines; j++) {
             energyfile << j+1 << "\t";
             energyfile << solutions_s.energies[j] << "\t" << solutions_l.energies[j] << "\n";
+
+            avposfile << j+1 << "\t";
+            avposfile << vint(solutions_s.waves[j]*solutions_s.waves[j]*rgrid,dr) << "\t" << vint(solutions_l.waves[j]*solutions_l.waves[j]*rgrid,dr) << "\n";
         }
         energyfile.close();
         wavefile_s.close();
         wavefile_l.close();
+        avposfile.close();
     }
 
     std::cout << "Done.\n";
