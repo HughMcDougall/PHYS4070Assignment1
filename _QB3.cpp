@@ -36,6 +36,8 @@ int main(int argc, char *argv[]) {
     std::cout << "Program Starting\n";
     int nsplines, ngrid;
     double rmin, rmax;
+    int maxits, ens_to_check;
+    double tol;
     bool save_outputs;
     std::string output_dir;
 
@@ -50,13 +52,13 @@ int main(int argc, char *argv[]) {
         if (argc > 2){
             ngrid = std::stoi(argv[2]);
         } else{
-            ngrid = 5001;
+            ngrid = 10001;
         }
 
         if (argc > 3){
             rmin = std::stof(argv[3]);
         } else{
-            rmin = 0.001;
+            rmin = 0.00001;
         }
 
         if (argc > 4){
@@ -66,33 +68,54 @@ int main(int argc, char *argv[]) {
         }
 
         if (argc > 5){
-            save_outputs = std::stoi(argv[5]);
+            maxits = std::stoi(argv[5]);
+        } else{
+            maxits  = 100;
+        }
+
+        if (argc > 6){
+            tol = std::stof(argv[6]);
+        } else{
+            tol  = 0.000001;
+        }
+
+        if (argc > 7){
+            ens_to_check = std::stoi(argv[7]);
+        } else{
+            ens_to_check  = 5;
+        }
+
+        if (argc > 8){
+            save_outputs = std::stoi(argv[8]);
         } else{
             save_outputs  = false;
         }
 
-        if (argc > 6){
-            output_dir = argv[6];
+        if (argc > 9){
+            output_dir = argv[9];
         } else{
-            output_dir  = "./outputs/B3/";
+            output_dir  = "./outputs/B4/";
         }
 
+        std::cout << "Parameters:\n";
+        std::cout << "nsplines = \t"    << nsplines << "\n";
+        std::cout << "ngrid = \t"       << ngrid << "\n";
+        std::cout << "rmin = \t"    << rmin << "\n";
+        std::cout << "rmax = \t"       << rmax << "\n";
+        std::cout << "maxits = \t"    << maxits << "\n";
+        std::cout << "tol = \t"       << tol << "\n";
+        std::cout << "ens_to_check = \t"       << ens_to_check << "\n";
+        std::cout << "save_outputs = \t"    << save_outputs << "\n";
+        std::cout << "output_dir = \t"       << output_dir << "\n";
 
     }
 
 
-    //-----------------------------------------
-    //Make grid, b-splines & Diffs
-    std::cout << "Parameters:\n";
-    std::cout << "nsplines = \t"    << nsplines << "\n";
-    std::cout << "ngrid = \t"       << ngrid << "\n";
-    std::cout << "rmin = \t"    << rmin << "\n";
-    std::cout << "rmax = \t"       << rmax << "\n";
-    std::cout << "save_outputs = \t"    << save_outputs << "\n";
-    std::cout << "output_dir = \t"       << output_dir << "\n";
 
     std::cout << "------------------\n";
 
+    //-----------------------------------------
+    //Make grid, b-splines & Diffs
     std::cout << "Making Splines...\n";
     std::vector<double> rgrid = make_rgrid(rmin, rmax, ngrid);
     double dr = (rmax-rmin) / (ngrid-1);
@@ -122,6 +145,7 @@ int main(int argc, char *argv[]) {
     std::vector<double> Vdir     = vec_from_func(Vgr_f, rgrid); //e-e interaction, begin as greens function
 
     std::vector<double> Vs      = Vnuc_s + Vdir;
+    std::vector<double> Vl      = Vnuc_l + Vdir;
 
     std::cout << "Done.\n";
     std::cout << "----------------------------------\n";
@@ -131,6 +155,7 @@ int main(int argc, char *argv[]) {
     std::cout << "Calculating initial energy eigenstates...\n";
 
     energy_and_waves solutions_s = solve_energies(Vs, bsplines, bsplines_diff, dr);
+    energy_and_waves solutions_l = solve_energies(Vl, bsplines, bsplines_diff, dr);
 
     std::cout << "Done.\n";
 
@@ -139,35 +164,13 @@ int main(int argc, char *argv[]) {
     std::cout << "----------------------------------\n";
     std::cout << "Doing Hartree Procedure.\n";
 
-    int ittno = 0;
-    int maxits = 40;
+    std::vector<energy_and_waves> hartree_sols = hartree(rgrid, Vnuc_s, Vnuc_l,
+                                                              solutions_s, solutions_l,
+                                                              bsplines, bsplines_diff,
+                                                              maxits, tol,ens_to_check);
 
-    double tol = 0.001;
-    double echange = tol*10;
-    std::vector<double> e_old(5);
-
-    while (ittno < maxits && echange>tol){
-        //Get Y^{0}_{1s}{1s}
-
-        Vdir = YK::ykab(0, solutions_s.waves[0],solutions_s.waves[0],rgrid)*2.0;
-
-        //re-calculate potential and use to get solution
-        Vs      = Vnuc_s + Vdir;
-        solutions_s = solve_energies(Vs, bsplines, bsplines_diff, dr);
-
-        //Check changes in energies
-        echange=0;
-        for (int i=0; i<5; i++){
-            echange=std::max(echange, fabs(e_old[i]/solutions_s.energies[i]-1));
-            e_old[i]=solutions_s.energies[i];
-        }
-
-        ittno+=1;
-        std::cout<<"ittno:\t"<<ittno<<"\t Fractional change:\t"<<echange<<"\n";
-    }
-    //Use convergent 1s orbital to solve l orbital
-    std::vector<double> Vl      = Vnuc_l + Vdir;
-    energy_and_waves solutions_l = solve_energies(Vl, bsplines, bsplines_diff, dr);
+    solutions_s = hartree_sols[0];
+    solutions_l = hartree_sols[1];
 
     std::cout << "Done.\n";
     std::cout << "----------------------------------\n";

@@ -31,11 +31,13 @@ using list_of_vecs = std::vector<std::vector<double>>;
 int main(int argc, char *argv[]) {
     /// Read Inputs
     /// Order of inputs : nsplines,   ngrid,   rmin,   rmax,   save_outputs,   output_dir
-    /// Default inputs  : 60,         5001,   0.001,  100,     False,           "./outputs_B1"
+    /// Default inputs  : 60,         5001,   0.001,  100,     False,           "./outputs_B3"
 
     std::cout << "Program Starting\n";
     int nsplines, ngrid;
     double rmin, rmax;
+    int maxits, ens_to_check;
+    double tol;
     bool save_outputs;
     std::string output_dir;
 
@@ -50,13 +52,13 @@ int main(int argc, char *argv[]) {
         if (argc > 2){
             ngrid = std::stoi(argv[2]);
         } else{
-            ngrid = 5001;
+            ngrid = 10001;
         }
 
         if (argc > 3){
             rmin = std::stof(argv[3]);
         } else{
-            rmin = 0.001;
+            rmin = 0.00001;
         }
 
         if (argc > 4){
@@ -66,33 +68,54 @@ int main(int argc, char *argv[]) {
         }
 
         if (argc > 5){
-            save_outputs = std::stoi(argv[5]);
+            maxits = std::stoi(argv[5]);
+        } else{
+            maxits  = 100;
+        }
+
+        if (argc > 6){
+            tol = std::stof(argv[6]);
+        } else{
+            tol  = 0.000001;
+        }
+
+        if (argc > 7){
+            ens_to_check = std::stoi(argv[7]);
+        } else{
+            ens_to_check  = 5;
+        }
+
+        if (argc > 8){
+            save_outputs = std::stoi(argv[8]);
         } else{
             save_outputs  = false;
         }
 
-        if (argc > 6){
-            output_dir = argv[6];
+        if (argc > 9){
+            output_dir = argv[9];
         } else{
-            output_dir  = "./outputs/B1/";
+            output_dir  = "./outputs/B4/";
         }
 
+        std::cout << "Parameters:\n";
+        std::cout << "nsplines = \t"    << nsplines << "\n";
+        std::cout << "ngrid = \t"       << ngrid << "\n";
+        std::cout << "rmin = \t"    << rmin << "\n";
+        std::cout << "rmax = \t"       << rmax << "\n";
+        std::cout << "maxits = \t"    << maxits << "\n";
+        std::cout << "tol = \t"       << tol << "\n";
+        std::cout << "ens_to_check = \t"       << ens_to_check << "\n";
+        std::cout << "save_outputs = \t"    << save_outputs << "\n";
+        std::cout << "output_dir = \t"       << output_dir << "\n";
 
     }
 
 
-    //-----------------------------------------
-    //Make grid, b-splines & Diffs
-    std::cout << "Parameters:\n";
-    std::cout << "nsplines = \t"    << nsplines << "\n";
-    std::cout << "ngrid = \t"       << ngrid << "\n";
-    std::cout << "rmin = \t"    << rmin << "\n";
-    std::cout << "rmax = \t"       << rmax << "\n";
-    std::cout << "save_outputs = \t"    << save_outputs << "\n";
-    std::cout << "output_dir = \t"       << output_dir << "\n";
 
     std::cout << "------------------\n";
 
+    //-----------------------------------------
+    //Make grid, b-splines & Diffs
     std::cout << "Making Splines...\n";
     std::vector<double> rgrid = make_rgrid(rmin, rmax, ngrid);
     double dr = (rmax-rmin) / (ngrid-1);
@@ -106,15 +129,23 @@ int main(int argc, char *argv[]) {
     //Make voltage vector
     std::cout << "Generating Voltage potentials \n";
 
-    // Z are hardcoded for this question as we only care about lithium
+    // Make potential func using greens function
+    // Values are hardcoded for this question as we only care about lithium
+    double d = 0.2;
+    double h = 1.0;
     int Z = 3;
 
     //Get potentials for both s and l orbitals
     auto Vnuc_s_f = [Z](double r) { return V_hydrogen(r, Z, 0);};
     auto Vnuc_l_f = [Z](double r) { return V_hydrogen(r, Z, 1);};
+    auto Vgr_f = [Z, d, h](double r) { return V_green(r, Z, d, h);};
 
-    std::vector<double> Vs      = vec_from_func(Vnuc_s_f, rgrid);
-    std::vector<double> Vl      = vec_from_func(Vnuc_l_f, rgrid);
+    std::vector<double> Vnuc_s  = vec_from_func(Vnuc_s_f, rgrid);
+    std::vector<double> Vnuc_l  = vec_from_func(Vnuc_l_f, rgrid);
+    std::vector<double> Vdir     = vec_from_func(Vgr_f, rgrid); //e-e interaction, begin as greens function
+
+    std::vector<double> Vs      = Vnuc_s + Vdir;
+    std::vector<double> Vl      = Vnuc_l + Vdir;
 
     std::cout << "Done.\n";
     std::cout << "----------------------------------\n";
@@ -128,30 +159,46 @@ int main(int argc, char *argv[]) {
 
     std::cout << "Done.\n";
 
-    std::cout << "Calculated energies: \t s orbital \t l orbital \n";
-    for (int i=0; i<10; i++){
+    //-----------------------------------------
+    //Perform hartree itterations
+    std::cout << "----------------------------------\n";
+    std::cout << "Doing Hartree Procedure.\n";
+
+    std::vector<energy_and_waves> hartree_sols = hartree_fast(rgrid, Vnuc_s, Vnuc_l,
+                                                              solutions_s, solutions_l,
+                                                              maxits, tol,ens_to_check);
+
+    solutions_s = hartree_sols[0];
+    solutions_l = hartree_sols[1];
+
+    std::cout << "Done.\n";
+    std::cout << "----------------------------------\n";
+
+    //-----------------------------------------
+
+    std::cout << "\nCalculated energies: \t s orbital \t l orbital \n";
+    for (int i=0; i<5; i++){
         std::cout << "Energy Level "<< i+1 << ":\t" << solutions_s.energies[i] << "\t" << solutions_l.energies[i] << "\n";
     }
 
-    std::cout << "Average Positions: \t s orbital \t l orbital \n";
-    for (int i=0; i<10; i++){
+    std::cout << "\nAverage Positions: \t s orbital \t l orbital \n";
+    for (int i=0; i<5; i++){
         std::cout << "Energy Level "<< i+1 << ":\t";
         std::cout << vint(solutions_s.waves[i]*solutions_s.waves[i]*rgrid,dr)<< "\t";
         std::cout << vint(solutions_l.waves[i]*solutions_l.waves[i]*rgrid,dr)<< "\t";
         std::cout << "\n";
     }
-
     //-----------------------------------------
     //Outputs and saving
 
     //Output solutions to .txt files
     if(save_outputs){
 
-        //Save final potential
+        //Save Potential
         std::ofstream potfile(output_dir + "potential.txt");
         for (int i=0; i<ngrid; i++){
             potfile << rgrid[i] << "\t ";
-            potfile << Vs[i] << "\t" << Vl[i] << "\t" << Vs[i]+adjust[i]<< "\t" << Vl[i]+adjust[i];
+            potfile << Vs[i] << "\t" << Vl[i] << "\t";
             potfile << "\n";
         }
         potfile.close();

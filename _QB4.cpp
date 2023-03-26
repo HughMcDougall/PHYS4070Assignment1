@@ -31,11 +31,13 @@ using list_of_vecs = std::vector<std::vector<double>>;
 int main(int argc, char *argv[]) {
     /// Read Inputs
     /// Order of inputs : nsplines,   ngrid,   rmin,   rmax,   save_outputs,   output_dir
-    /// Default inputs  : 60,         5001,   0.001,  100,     False,           "./outputs_B4"
+    /// Default inputs  : 60,         5001,   0.001,  100,     False,           "./outputs_B3"
 
     std::cout << "Program Starting\n";
     int nsplines, ngrid;
     double rmin, rmax;
+    int maxits, ens_to_check;
+    double tol;
     bool save_outputs;
     std::string output_dir;
 
@@ -50,13 +52,13 @@ int main(int argc, char *argv[]) {
         if (argc > 2){
             ngrid = std::stoi(argv[2]);
         } else{
-            ngrid = 5001;
+            ngrid = 10001;
         }
 
         if (argc > 3){
             rmin = std::stof(argv[3]);
         } else{
-            rmin = 0.001;
+            rmin = 0.00001;
         }
 
         if (argc > 4){
@@ -66,32 +68,53 @@ int main(int argc, char *argv[]) {
         }
 
         if (argc > 5){
-            save_outputs = std::stoi(argv[5]);
+            maxits = std::stoi(argv[5]);
+        } else{
+            maxits  = 100;
+        }
+
+        if (argc > 6){
+            tol = std::stof(argv[6]);
+        } else{
+            tol  = 0.000001;
+        }
+
+        if (argc > 7){
+            ens_to_check = std::stoi(argv[7]);
+        } else{
+            ens_to_check  = 5;
+        }
+
+        if (argc > 8){
+            save_outputs = std::stoi(argv[8]);
         } else{
             save_outputs  = false;
         }
 
-        if (argc > 6){
-            output_dir = argv[6];
+        if (argc > 9){
+            output_dir = argv[9];
         } else{
             output_dir  = "./outputs/B4/";
         }
 
+        std::cout << "Parameters:\n";
+        std::cout << "nsplines = \t"    << nsplines << "\n";
+        std::cout << "ngrid = \t"       << ngrid << "\n";
+        std::cout << "rmin = \t"    << rmin << "\n";
+        std::cout << "rmax = \t"       << rmax << "\n";
+        std::cout << "maxits = \t"    << maxits << "\n";
+        std::cout << "tol = \t"       << tol << "\n";
+        std::cout << "ens_to_check = \t"       << ens_to_check << "\n";
+        std::cout << "save_outputs = \t"    << save_outputs << "\n";
+        std::cout << "output_dir = \t"       << output_dir << "\n";
+
     }
 
 
-    //-----------------------------------------
-    //Make grid, b-splines & Diffs
-    std::cout << "Parameters:\n";
-    std::cout << "nsplines = \t"    << nsplines << "\n";
-    std::cout << "ngrid = \t"       << ngrid << "\n";
-    std::cout << "rmin = \t"    << rmin << "\n";
-    std::cout << "rmax = \t"       << rmax << "\n";
-    std::cout << "save_outputs = \t"    << save_outputs << "\n";
-    std::cout << "output_dir = \t"       << output_dir << "\n";
 
     std::cout << "------------------\n";
-
+    //-----------------------------------------
+    //Make grid, b-splines & Diffs
     std::cout << "Making Splines...\n";
     std::vector<double> rgrid = make_rgrid(rmin, rmax, ngrid);
     double dr = (rmax-rmin) / (ngrid-1);
@@ -138,11 +161,31 @@ int main(int argc, char *argv[]) {
     //-----------------------------------------
     //Perform hartree itterations
     std::cout << "----------------------------------\n";
-    std::cout << "Doing Hartree Fock Procedure.\n";
+    std::cout << "Doing Hartree Procedure.\n";
 
-    std::vector<energy_and_waves> hartree_fock_results = hartree_fock(Vnuc_s, Vnuc_l, rgrid,
-                                                                     solutions_s, solutions_l,
-                                                                     40, 0.01, 5);
+    std::vector<energy_and_waves> hartree_sols = hartree(rgrid, Vnuc_s, Vnuc_l,
+                                                              solutions_s, solutions_l,
+                                                              bsplines, bsplines_diff,
+                                                              maxits, tol*10,ens_to_check);
+
+    solutions_s = hartree_sols[0];
+    solutions_l = hartree_sols[1];
+
+    std::cout << "Done.\n";
+    std::cout << "----------------------------------\n";
+
+    //-----------------------------------------
+    //Perform hartree_dock itterations
+    std::cout << "----------------------------------\n";
+    std::cout << "Doing Hartree-Fock Procedure.\n";
+
+    hartree_sols = hartree_fock(rgrid, Vnuc_s, Vnuc_l,
+                                solutions_s, solutions_l,
+                                bsplines, bsplines_diff,
+                                maxits, tol, ens_to_check);
+
+    solutions_s = hartree_sols[0];
+    solutions_l = hartree_sols[1];
 
     std::cout << "Done.\n";
     std::cout << "----------------------------------\n";
