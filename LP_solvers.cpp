@@ -1,5 +1,6 @@
 //
-// Created by hughm on 12/03/2023.
+// Wrapper functions for lapack routines
+// HM Mar 23
 //
 
 #include <cassert>
@@ -75,6 +76,8 @@ namespace lapack{
         /// Solves the eigenvector system [Ax=kBx] for x and k
         /// Returns as struct "MatrixAndVector out" with solutions
         /// Stored in out.vector and out.matrix
+
+        assert(A.size()==B.size() && "A and B must be same size in LP_Eig_AB()");
 
         //Creat dummy storage for outputs
         MatrixAndVector result(A.N());

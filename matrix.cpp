@@ -1,5 +1,6 @@
 //
-// Created by hughm on 11/03/2023.
+// Class for square matrices
+// HM Mar 23
 //
 
 #include "matrix.hpp"

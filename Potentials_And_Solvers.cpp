@@ -1,5 +1,6 @@
 //
-// Created by hughm on 18/03/2023.
+// Functions that are specific to PHYS4070 assignment 1
+// HM Mar 23
 //
 
 //Imports
@@ -24,11 +25,13 @@ using list_of_vecs = std::vector<std::vector<double>>;
 //Potentials
 double V_hydrogen(double r, int Z, int l){
     /// A simple hydrogen-like potential
+    assert(r>0 && "r must be positive in V_hydrogen()");
     return -Z/r + l*(l+1)/r/r/2;
 }
 
 double V_green(double r, int Z,  double d, double h ){
     /// Green's function, a first estimate of the electron-electron potential term from mean field theory
+    assert(r>0 && "r must be positive in V-green()");
     return (Z-1) / r * h * (exp(r/d)-1 ) / (1+h*(exp(r/d)-1));
 }
 //=======================================================
@@ -36,7 +39,7 @@ double V_green(double r, int Z,  double d, double h ){
 
 matrix::sqmatrix make_H(const std::vector<double> & V, const list_of_vecs & waves, const list_of_vecs & waves_diffs, double dr) {
     /// Makes the non-exchange hamiltonian matrix for a set of waves and their derivatives
-    /// Assumes dr
+
     int nwaves = waves.size();
     matrix::sqmatrix H(nwaves);
 
@@ -170,7 +173,9 @@ energy_and_waves solve_energies(std::vector<double> & V, const list_of_vecs & sp
 
 energy_and_waves single_step(const matrix::sqmatrix & H, energy_and_waves system, double dr){
     /// Performs a single update on an ortho-normal set of waves
-    // [MISSINGNO] Safety checks
+    // Safety checks
+    assert(dr>=0 && "cannot have negative length in single_step()");
+    assert(H.size()== system.energies.size() && "Mismatch in number of modes between H and system in single_step");
 
     // Use linalg to get solutions
     lapack::MatrixAndVector solutions = lapack::LP_Eig_A(H);
@@ -189,7 +194,14 @@ std::vector<energy_and_waves> hartree(const std::vector<double> & rgrid, const s
                                       int maxits, double tol, int ens_to_check
                                       ){
 
-    //MISSINGNO - Safety checks
+    //Sanity Checks
+    assert(Vnuc_s.size()==Vnuc_l.size() && Vnuc_s.size()==rgrid.size() && "Voltages and Grid must all have same length");
+    for (int i=0; i<solutions_s.waves.size(); i++){
+        assert(Vnuc_s.size()==bsplines[i].size() && Vnuc_s.size() == bsplines_diff[i].size() && "Length of all splines and voltage must match");
+    }
+    assert(ens_to_check>0 && "ens_to_check must be >=1");
+    assert(maxits>0 && "maxits must be >=1");
+    assert(tol>0 && tol<1 && "Tolerance must be 0<tol<1");
 
     //Grid properties
     int ngrid = rgrid.size();
@@ -237,7 +249,14 @@ std::vector<energy_and_waves> hartree_fast(const std::vector<double> & rgrid, co
                                       energy_and_waves solutions_s, energy_and_waves solutions_l,
                                       int maxits, double tol, int ens_to_check){
 
-    //MISSINGNO - Safety checks
+    /// Implementation of the hartree method that re-uses solutions from each itteration
+    /// As the basis for the next step
+
+    //Sanity Checks
+    assert(Vnuc_s.size()==Vnuc_l.size() && Vnuc_s.size()==rgrid.size() && "Voltages and Grid must all have same length");
+    assert(ens_to_check>0 && "ens_to_check must be >=1");
+    assert(maxits>0 && "maxits must be >=1");
+    assert(tol>0 && tol<1 && "Tolerance must be 0<tol<1");
 
     //Grid properties
     int nwaves = solutions_s.waves.size();
@@ -297,7 +316,16 @@ std::vector<energy_and_waves> hartree_fock(const std::vector<double> & rgrid, co
                                                 energy_and_waves solutions_s, energy_and_waves solutions_l,
                                                 const list_of_vecs & bsplines, const list_of_vecs & bsplines_diff,
                                                 int maxits, double tol, int ens_to_check){
-    //MISSINGNO - Safety checks
+
+    /// Implementation of the hartree_fock method that uses b-splines as a basis
+    //Sanity Checks
+    assert(Vnuc_s.size()==Vnuc_l.size() && Vnuc_s.size()==rgrid.size() && "Voltages and Grid must all have same length");
+    for (int i=0; i<solutions_s.waves.size(); i++){
+        assert(Vnuc_s.size()==bsplines[i].size() && Vnuc_s.size() == bsplines_diff[i].size() && "Length of all splines and voltage must match");
+    }
+    assert(ens_to_check>0 && "ens_to_check must be >=1");
+    assert(maxits>0 && "maxits must be >=1");
+    assert(tol>0 && tol<1 && "Tolerance must be 0<tol<1");
 
     //==================================================================
     //Grid properties
@@ -385,8 +413,14 @@ std::vector<energy_and_waves> hartree_fock(const std::vector<double> & rgrid, co
 std::vector<energy_and_waves> hartree_fock_fast(const std::vector<double> & rgrid, const std::vector<double> & Vnuc_s, const std::vector<double> & Vnuc_l,
                                            energy_and_waves solutions_s, energy_and_waves solutions_l,
                                            int maxits, double tol, int ens_to_check){
+    /// Implementation of the hartree_fock method that re-uses solutions from each itteration
+    /// As the basis for the next step
 
-    //MISSINGNO - Safety checks
+    //Sanity Checks
+    assert(Vnuc_s.size()==Vnuc_l.size() && Vnuc_s.size()==rgrid.size() && "Voltages and Grid must all have same length");
+    assert(ens_to_check>0 && "ens_to_check must be >=1");
+    assert(maxits>0 && "maxits must be >=1");
+    assert(tol>0 && tol<1 && "Tolerance must be 0<tol<1");
 
     //==================================================================
     //Grid properties

@@ -167,9 +167,8 @@ int main(int argc, char *argv[]) {
     std::cout << "----------------------------------\n";
     std::cout << "Doing Hartree Procedure.\n";
 
-    std::vector<energy_and_waves> hartree_sols = hartree(rgrid, Vnuc_s, Vnuc_l,
+    std::vector<energy_and_waves> hartree_sols = hartree_fast(rgrid, Vnuc_s, Vnuc_l,
                                                               solutions_s, solutions_l,
-                                                              bsplines, bsplines_diff,
                                                               maxits, tol*10,ens_to_check);
 
     solutions_s = hartree_sols[0];
@@ -183,9 +182,8 @@ int main(int argc, char *argv[]) {
     std::cout << "----------------------------------\n";
     std::cout << "Doing Hartree-Fock Procedure.\n";
 
-    hartree_sols = hartree_fock(rgrid, Vnuc_s, Vnuc_l,
+    hartree_sols = hartree_fock_fast(rgrid, Vnuc_s, Vnuc_l,
                                 solutions_s, solutions_l,
-                                bsplines, bsplines_diff,
                                 maxits, tol, ens_to_check);
 
     solutions_s = hartree_sols[0];

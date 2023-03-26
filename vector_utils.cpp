@@ -1,5 +1,7 @@
 //
-// Created by hughm on 13/03/2023.
+// Grab-bag of general utility functions for working with std::vectors
+// Over-loads basic arithmetic (+, -, *, /) for vectors and doubles / ints
+// HM Mar 23
 //
 
 #include <iostream>

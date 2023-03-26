@@ -30,7 +30,7 @@ using list_of_vecs = std::vector<std::vector<double>>;
 int main(int argc, char *argv[]) {
     /// Read Inputs
     /// Order of inputs : Z,    l,  nsplines,   ngrid,  rmin,   rmax,   save_outputs,   output_dir
-    /// Default inputs  : 1,    0,  60,         1001,   0.001,  20,     True,           "./outputs_B1"
+    /// Default inputs  : 1,    0,  60,         1001,   0.001,  20,     True,           "./single/"
 
     std::cout << "Program Starting\n";
     int Z, l;
@@ -86,7 +86,7 @@ int main(int argc, char *argv[]) {
         if (argc > 8){
             output_dir = argv[8];
         } else{
-            output_dir  = "./outputs/B1/";
+            output_dir  = "./outputs/single/";
         }
     }
 

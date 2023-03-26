@@ -1,5 +1,6 @@
 //
-// Created by hughm on 18/03/2023.
+// Functions for easily generating splines. Contains wrappers for bspline.cpp
+// HM Mar 23
 //
 
 #include "spline_eval.hpp"
@@ -18,6 +19,8 @@ using list_of_vecs = std::vector<std::vector<double>>;
 //=======================================================
 //B-Spline Evaluation
 list_of_vecs generate_splines(int nsplines, const std::vector<double> & rgrid, int k_spline){
+    /// Wrapper function for generating splines quickly
+    /// Takes nsplines, evenly spaced sorted grid of radii, and order of splines (defaults to 7)
     //Sanity Checks
     assert(nsplines && "Too few splines for spline order. Require nsplines + 3> 2 * k_spline");
     assert(rgrid.size()> 2 && "Invalid radial grid in generating bsplines");
@@ -46,6 +49,9 @@ list_of_vecs generate_splines(int nsplines, const std::vector<double> & rgrid, i
 }
 
 list_of_vecs generate_spline_diffs(int nsplines, const std::vector<double> & rgrid, int k_spline, double dr){
+    /// Wrapper function for generating splines derivatives quickly
+    /// Takes nsplines, evenly spaced sorted grid of radii, and order of splines (defaults to 7)
+
     //Sanity Checks
     assert(nsplines && "Too few splines for spline order. Require nsplines + 3> 2 * k_spline");
     assert(rgrid.size()> 2 && "Invalid radial grid in generating bsplines");
