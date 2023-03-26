@@ -1,0 +1,242 @@
+C:\Users\hughm\OneDrive\UQ\PHYS4070\Assignments\Assignment1>echo off
+"Beginning compile"
+"       ---------------------------------"
+"       ---------------------------------"
+"Compile complete. Running: \n"
+"       ---------------------------------"
+------------------
+------------------
+Starting Question B1
+------------------
+------------------
+Parameters:
+nsplines =      60
+ngrid =         10001
+rmin =  0.0001
+rmax =  120
+save_outputs =  1
+output_dir =    ./outputs/B1/
+------------------
+Making Splines...
+Done.
+Generating Voltage potentials
+Done.
+----------------------------------
+Calculating initial energy eigenstates...
+Done.
+Calculated energies:     s orbital       l orbital
+Energy Level 1: -4.3978 -1.12203
+Energy Level 2: -1.13444        -0.499511
+Energy Level 3: -0.504604       -0.281122
+Energy Level 4: -0.28343        -0.17995
+Energy Level 5: -0.181161       -0.124974
+Energy Level 6: -0.125682       -0.0918212
+Energy Level 7: -0.0922692      -0.0703021
+Energy Level 8: -0.0706031      -0.0555482
+Energy Level 9: -0.0557599      -0.0449946
+Energy Level 10:        -0.0451491      -0.0371858
+Average Positions:       s orbital       l orbital
+Energy Level 1: 0.549728        1.67441
+Energy Level 2: 1.97398 4.169
+Energy Level 3: 4.44828 7.66824
+Energy Level 4: 7.93132 12.1688
+Energy Level 5: 12.4154 17.6698
+Energy Level 6: 17.8995 24.1707
+Energy Level 7: 24.3834 31.6715
+Energy Level 8: 31.8671 40.1724
+Energy Level 9: 40.3508 49.6732
+Energy Level 10:        49.8344 60.1699
+Relaxation time is ~     24378 ns
+Done.
+                 Program Done.
+------------------
+------------------
+Starting Question B2
+------------------
+------------------
+Parameters:
+nsplines =      60
+ngrid =         10001
+rmin =  0.0001
+rmax =  120
+save_outputs =  1
+output_dir =    ./outputs/B2/
+------------------
+Making Splines...
+Done.
+Generating Voltage potentials
+Done.
+----------------------------------
+Calculating initial energy eigenstates...
+Done.
+Calculated energies:     s orbital       l orbital
+Energy Level 1: -0.846185       -0.125412
+Energy Level 2: -0.156857       -0.0556978
+Energy Level 3: -0.064349       -0.0313129
+Energy Level 4: -0.0348427      -0.0200329
+Energy Level 5: -0.0218061      -0.0139078
+Average Positions:       s orbital       l orbital
+Energy Level 1: 0.936474        4.97581
+Energy Level 2: 4.80049 12.4621
+Energy Level 3: 11.6674 22.9491
+Energy Level 4: 21.5343 36.4362
+Energy Level 5: 34.4012 52.9062
+----------------------------------
+Calculating first order energy perturbations...
+Done.
+Calculated energies:     s orbital       l orbital
+Energy Level 1: -1.60282        -0.130067
+Energy Level 2: -0.204247       -0.0572225
+Energy Level 3: -0.0765096      -0.0319757
+Energy Level 4: -0.0396537      -0.0203766
+Energy Level 5: -0.0241808      -0.0141082
+Relaxation time with greens is ~         193.325 ns
+Relaxation time with perturbation is ~   14.7269 ns
+Done.
+                 Program Done.
+------------------
+------------------
+Starting Question B3
+------------------
+------------------
+Parameters:
+nsplines =      60
+ngrid =         50001
+rmin =  1e-05
+rmax =  120
+maxits =        40
+tol =   1e-06
+ens_to_check =  5
+save_outputs =  1
+output_dir =    ./outputs/B3/
+------------------
+Making Splines...
+Done.
+Generating Voltage potentials
+Done.
+----------------------------------
+Calculating initial energy eigenstates...
+Done.
+----------------------------------
+Doing Hartree Procedure.
+Doing S-Orbital iterations in hartree():
+
+ittno   e_1s    e_2s    echange
+1       -1.84906        -0.198411       0.55558
+2       -1.25257        -0.178288       0.476214
+3       -1.44319        -0.18506        0.132083
+4       -1.36166        -0.182251       0.0598742
+5       -1.39301        -0.183343       0.0225075
+6       -1.38042        -0.182906       0.00912396
+7       -1.38539        -0.183079       0.00359022
+8       -1.38342        -0.18301        0.00142955
+9       -1.3842 -0.183038       0.00056655
+10      -1.38389        -0.183027       0.00022495
+11      -1.38401        -0.183031       8.92512e-05
+12      -1.38396        -0.183029       3.54217e-05
+13      -1.38398        -0.18303        1.40564e-05
+14      -1.38398        -0.18303        5.57826e-06
+15      -1.38398        -0.18303        2.21368e-06
+16      -1.38398        -0.18303        8.78486e-07
+Done.
+----------------------------------
+
+Calculated energies:     s orbital       l orbital
+Energy Level 1: -1.38398        -0.127478
+Energy Level 2: -0.18303        -0.0563591
+Energy Level 3: -0.0707948      -0.0315988
+Energy Level 4: -0.0373468      -0.0201808
+Energy Level 5: -0.0230293      -0.0139939
+
+Average Positions:       s orbital       l orbital
+Energy Level 1: 0.694113        4.86574
+Energy Level 2: 4.13583 12.2945
+Energy Level 3: 10.6171 22.7251
+Energy Level 4: 20.0989 36.156
+Energy Level 5: 32.5805 52.5717
+Relaxation time is ~     43.1266 ns
+Done.
+                 Program Done.
+------------------
+------------------
+Starting Question B4
+------------------
+------------------
+Parameters:
+nsplines =      60
+ngrid =         50001
+rmin =  1e-05
+rmax =  120
+maxits =        40
+tol =   1e-06
+ens_to_check =  5
+save_outputs =  1
+output_dir =    ./outputs/B4/
+------------------
+Making Splines...
+Done.
+Generating Voltage potentials
+Done.
+----------------------------------
+Calculating initial energy eigenstates...
+Done.
+----------------------------------
+Doing Hartree Procedure.
+Doing S-Orbital iterations in hartree():
+
+ittno   e_1s    e_2s    echange
+1       -1.84906        -0.198411       0.55558
+2       -1.25257        -0.178288       0.476214
+3       -1.44319        -0.18506        0.132083
+4       -1.36166        -0.182251       0.0598742
+5       -1.39301        -0.183343       0.0225075
+6       -1.38042        -0.182906       0.00912396
+7       -1.38539        -0.183079       0.00359022
+8       -1.38342        -0.18301        0.00142955
+9       -1.3842 -0.183038       0.00056655
+10      -1.38389        -0.183027       0.00022495
+11      -1.38401        -0.183031       8.92512e-05
+12      -1.38396        -0.183029       3.54217e-05
+13      -1.38398        -0.18303        1.40564e-05
+14      -1.38398        -0.18303        5.57826e-06
+Done.
+----------------------------------
+----------------------------------
+Doing Hartree-Fock Procedure.
+Doing S-Orbital iterations in hartree_fock():
+
+ittno   e_1s    e_2s    echange
+1       -2.81273        -0.200098       0.50796
+2       -2.73686        -0.196538       0.0277188
+3       -2.72816        -0.196346       0.00319235
+4       -2.727  -0.196324       0.000422941
+5       -2.72684        -0.196321       5.80372e-05
+6       -2.72682        -0.19632        8.0862e-06
+7       -2.72682        -0.19632        1.1379e-06
+8       -2.72682        -0.19632        1.61326e-07
+Doing P-Orbital iterations in hartree_fock():
+
+ittno   e_2s    echange
+1       -0.129047       0.0121619
+2       -0.129047       0
+Done.
+----------------------------------
+
+Calculated energies:     s orbital       l orbital
+Energy Level 1: -2.72682        -0.129047
+Energy Level 2: -0.19632        -0.0568694
+Energy Level 3: -0.0737794      -0.0318192
+Energy Level 4: -0.0384656      -0.0202947
+Energy Level 5: -0.0235655      -0.0140601
+
+Average Positions:       s orbital       l orbital
+Energy Level 1: 0.601022        4.7822
+Energy Level 2: 3.87634 12.1674
+Energy Level 3: 10.199  22.5551
+Energy Level 4: 19.5222 35.9431
+Energy Level 5: 31.8451 52.3173
+Relaxation time is ~     27.0989 ns
+Done.
+                 Program Done.
+"       ---------------------------------"
+Press any key to continue . . .

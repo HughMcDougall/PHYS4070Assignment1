@@ -1,0 +1,73 @@
+;This file was created by Graph (http://www.padowan.dk)
+;Do not change this file from other programs.
+[Graph]
+Version = 4.4.2.543
+MinVersion = 2.5
+OS = Windows NT 6.2 
+
+[Axes]
+xMin = -0.906500501162797
+xMax = 40.4903808074792
+xTickUnit = 5
+xGridUnit = 5
+xLabel = Itteration Number
+yMin = -2.85013884939249
+yMax = -0.154192614824592
+yTickUnit = 1
+yGridUnit = 1
+yLabel = e_1s
+AxesColor = clBlue
+GridColor = 0x00FF9999
+NumberFont = CMU Serif,10,clBlack,B
+LabelFont = CMU Serif,12,clBlack,B
+LegendFont = CMU Serif,8,clBlack,B
+ShowLegend = 1
+Radian = 1
+AxesStyle = 2
+
+[Func1]
+FuncType = 0
+y = -2.72682
+LegendText = True Value
+Style = 1
+Color = clRed
+Size = 2
+
+[Func2]
+FuncType = 0
+y = -1.38398
+LegendText = Terminal Value
+Style = 2
+Color = clBlack
+Size = 4
+
+[PointSeries1]
+FillColor = clBlue
+LineColor = clNavy
+Size = 3
+Style = 0
+LineStyle = 0
+LabelPosition = 1
+PointCount = 15
+Points = 0,-0.846;1,-1.84906;2,-1.25257;3,-1.44319;4,-1.36166;5,-1.39301;6,-1.38042;7,-1.38539;8,-1.38342;9,-1.3842;10,-1.38389;11,-1.38401;12,-1.38396;13,-1.38398;14,-1.38398;
+LegendText = Hartee Itterations
+
+[PointSeries2]
+FillColor = clRed
+LineColor = clNavy
+Size = 3
+Style = 0
+LineStyle = 0
+LabelPosition = 1
+PointCount = 9
+Points = 14,-1.38398;15,-2.81273;16,-2.73686;17,-2.72816;18,-2.727;19,-2.72684;20,-2.72682;21,-2.72682;22,-2.72682;
+LegendText = Hartree-Fock Itterations
+
+[Data]
+TextLabelCount = 0
+FuncCount = 2
+PointSeriesCount = 2
+ShadeCount = 0
+RelationCount = 0
+OleObjectCount = 0
+
