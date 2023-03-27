@@ -175,7 +175,7 @@ energy_and_waves single_step(const matrix::sqmatrix & H, energy_and_waves system
     /// Performs a single update on an ortho-normal set of waves
     // Safety checks
     assert(dr>=0 && "cannot have negative length in single_step()");
-    assert(H.size()== system.energies.size() && "Mismatch in number of modes between H and system in single_step");
+    assert(H.N()== system.energies.size() && "Mismatch in number of modes between H and system in single_step");
 
     // Use linalg to get solutions
     lapack::MatrixAndVector solutions = lapack::LP_Eig_A(H);
